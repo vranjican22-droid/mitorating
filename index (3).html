@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mito Rating — Ingresar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL = 'https://zvgpdvjosjtkqqidykdf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z3Bkdmpvc2p0a3FxaWR5a2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTExODMsImV4cCI6MjA5NDEyNzE4M30.D6Q_z_NO_dPkD0uwiEINhpIi9AU9X-lqquMCULsp37k';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+</script>
+<style>
+:root{--green:#1a6b4a;--green-l:#e8f5ee;--green-m:#2d9e6b;--green-d:#0d3d2a;--green-b:#a8dcc1;--purple:#5b4fcf;--purple-l:#edeafc;--red:#c0392b;--red-l:#fdecea;--g50:#f8f7f4;--g100:#f0ede8;--g200:#ddd9d2;--g400:#9c9890;--g600:#5e5a54;--g900:#1a1916;--bdr:#e8e4dd;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;}
+.wrap{width:100%;max-width:400px;}
+.logo-area{text-align:center;margin-bottom:32px;}
+.logo{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:var(--green-d);border-radius:18px;font-size:28px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;margin-bottom:12px;}
+.logo-title{font-size:24px;font-weight:600;color:var(--green-d);letter-spacing:-.5px;}
+.logo-sub{font-size:13px;color:var(--g600);margin-top:4px;}
+.card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:24px;}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);margin:-24px -24px 24px;}
+.tab{flex:1;padding:14px;text-align:center;font-size:14px;font-weight:500;color:var(--g400);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s;}
+.tab.on{color:var(--green);border-bottom-color:var(--green);}
+.flabel{font-size:12px;color:var(--g600);margin-bottom:5px;display:block;font-weight:500;}
+.fi{width:100%;padding:12px 14px;border:1px solid var(--bdr);border-radius:var(--rs);font-size:15px;background:#fff;color:var(--g900);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:14px;}
+.fi:focus{border-color:var(--green-m);}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.btn:active{opacity:.85;}
+.btng{background:var(--green);color:#fff;margin-bottom:12px;}
+.btn-google{background:#fff;color:var(--g900);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;}
+.btn-phone{background:var(--green-l);color:var(--green-d);border:1px solid var(--green-b);display:flex;align-items:center;justify-content:center;gap:10px;}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--g400);font-size:12px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bdr);}
+.toast{padding:12px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;text-align:center;display:none;margin-bottom:14px;}
+.toast.show{display:block;}
+.toast-ok{background:var(--green-l);color:var(--green-d);}
+.toast-err{background:var(--red-l);color:var(--red);}
+.toast-info{background:var(--purple-l);color:var(--purple);}
+.spinner-wrap{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;}
+.spinner{width:20px;height:20px;border:2px solid var(--bdr);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.phone-step{display:none;}
+.phone-step.active{display:block;}
+.code-inputs{display:flex;gap:8px;margin-bottom:14px;}
+.code-input{flex:1;padding:14px 0;text-align:center;font-size:22px;font-weight:600;font-family:'DM Mono',monospace;border:1px solid var(--bdr);border-radius:var(--rs);background:#fff;color:var(--g900);outline:none;transition:border-color .15s;}
+.code-input:focus{border-color:var(--green-m);}
+.back-link{text-align:center;font-size:13px;color:var(--g600);margin-top:14px;cursor:pointer;}
+.back-link span{color:var(--green);font-weight:500;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-area">
+    <div class="logo">M</div>
+    <div class="logo-title">Mito Rating</div>
+    <div class="logo-sub">El sistema de rating del pádel argentino</div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab('login')">Ingresar</div>
+      <div class="tab" onclick="switchTab('register')">Registrarse</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tab-login">
+      <div id="toast-login" class="toast"></div>
+
+      <!-- Email/Password -->
+      <div id="login-email-form">
+        <label class="flabel">Email</label>
+        <input class="fi" type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
+        <label class="flabel">Contraseña</label>
+        <input class="fi" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+        <div style="text-align:right;margin:-8px 0 14px;"><span style="font-size:12px;color:var(--green);cursor:pointer;" onclick="forgotPassword()">¿Olvidaste tu contraseña?</span></div>
+        <button class="btn btng" onclick="loginEmail()">Ingresar</button>
+      </div>
+
+      <div class="divider">o ingresá con</div>
+
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Continuar con Google
+      </button>
+
+      <button class="btn btn-phone" onclick="showPhoneLogin()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1 19.79 19.79 0 0 1 1.61 4.53 2 2 0 0 1 3.6 2.34h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l.94-.94a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z"/></svg>
+        Continuar con teléfono
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tab-register" style="display:none;">
+      <div id="toast-reg" class="toast"></div>
+      <label class="flabel">Nombre completo</label>
+      <input class="fi" type="text" id="reg-nombre" placeholder="Juan Pérez">
+      <label class="flabel">Email</label>
+      <input class="fi" type="email" id="reg-email" placeholder="tu@email.com">
+      <label class="flabel">Contraseña</label>
+      <input class="fi" type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
+      <label class="flabel">Rol en cancha</label>
+      <select class="fi" id="reg-rol">
+        <option value="derecha">Derecha</option>
+        <option value="reves">Revés</option>
+      </select>
+      <label class="flabel">Ciudad</label>
+      <select class="fi" id="reg-ciudad">
+        <option value="Buenos Aires">Buenos Aires</option>
+        <option value="Córdoba">Córdoba</option>
+        <option value="Rosario">Rosario</option>
+        <option value="Mendoza">Mendoza</option>
+        <option value="otra">Otra</option>
+      </select>
+      <button class="btn btng" onclick="registerEmail()">Crear cuenta</button>
+      <div class="divider">o registrate con</div>
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Continuar con Google
+      </button>
+    </div>
+
+    <!-- PHONE LOGIN -->
+    <div id="phone-login" style="display:none;">
+      <div id="toast-phone" class="toast"></div>
+      <div class="phone-step active" id="phone-step1">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:32px;margin-bottom:8px;">📱</div>
+          <div style="font-size:15px;font-weight:600;">Ingresá tu número</div>
+          <div style="font-size:13px;color:var(--g600);margin-top:4px;">Te mandamos un código por WhatsApp</div>
+        </div>
+        <label class="flabel">Número de teléfono</label>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <select class="fi" style="width:100px;margin-bottom:0;flex-shrink:0;">
+            <option value="+54">🇦🇷 +54</option>
+            <option value="+598">🇺🇾 +598</option>
+            <option value="+56">🇨🇱 +56</option>
+          </select>
+          <input class="fi" style="margin-bottom:0;" type="tel" id="phone-num" placeholder="11 1234 5678">
+        </div>
+        <button class="btn btng" onclick="sendOTP()">Enviar código</button>
+        <div class="back-link" onclick="showEmailLogin()">← <span>Volver al login con email</span></div>
+      </div>
+      <div class="phone-step" id="phone-step2">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+          <div style="font-size:15px;font-weight:600;">Ingresá el código</div>
+          <div style="font-size:13px;color:var(--g600);margin-top:4px;" id="phone-sent-to">Código enviado a tu número</div>
+        </div>
+        <div class="code-inputs">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c1" oninput="nextCode(this,'c2')">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c2" oninput="nextCode(this,'c3')">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c3" oninput="nextCode(this,'c4')">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c4" oninput="nextCode(this,'c5')">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c5" oninput="nextCode(this,'c6')">
+          <input class="code-input" type="number" min="0" max="9" maxlength="1" id="c6" oninput="verifyOTP()">
+        </div>
+        <button class="btn btng" onclick="verifyOTP()">Verificar código</button>
+        <div class="back-link" onclick="resendOTP()">No recibí el código · <span>Reenviar</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--g400);">
+    Al continuar aceptás los <span style="color:var(--green);cursor:pointer;">Términos de uso</span> de Mito Rating
+  </div>
+</div>
+
+<script>
+let phoneNum = '';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('on', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('tab-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('tab-register').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('phone-login').style.display = 'none';
+}
+
+function showPhoneLogin() {
+  document.getElementById('tab-login').style.display = 'none';
+  document.getElementById('phone-login').style.display = 'block';
+}
+
+function showEmailLogin() {
+  document.getElementById('tab-login').style.display = 'block';
+  document.getElementById('phone-login').style.display = 'none';
+}
+
+function showToast(id, msg, type='ok') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `toast show toast-${type}`;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function nextCode(el, nextId) {
+  if (el.value.length >= 1) {
+    const next = document.getElementById(nextId);
+    if (next) next.focus();
+  }
+}
+
+// ─── EMAIL LOGIN ──────────────────────────────────────────────
+async function loginEmail() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) { showToast('toast-login','Completá email y contraseña','err'); return; }
+  showToast('toast-login','Ingresando...','info');
+  try {
+    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    await afterLogin(data.user);
+  } catch(e) {
+    showToast('toast-login', e.message === 'Invalid login credentials' ? 'Email o contraseña incorrectos' : e.message, 'err');
+  }
+}
+
+// ─── REGISTER ────────────────────────────────────────────────
+async function registerEmail() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const rol = document.getElementById('reg-rol').value;
+  const ciudad = document.getElementById('reg-ciudad').value;
+  if (!nombre || !email || !pass) { showToast('toast-reg','Completá todos los campos','err'); return; }
+  if (pass.length < 6) { showToast('toast-reg','La contraseña debe tener al menos 6 caracteres','err'); return; }
+  showToast('toast-reg','Creando tu cuenta...','info');
+  try {
+    const { data, error } = await supa.auth.signUp({ email, password: pass, options: { data: { nombre, rol, ciudad } } });
+    if (error) throw error;
+    // Crear perfil en tabla jugadores
+    await supa.from('jugadores').insert({
+      id: data.user.id,
+      nombre, email, rol, ciudad,
+      rating: 1200,
+      rating_provisional: true,
+      verificado: false,
+      avatar_iniciales: nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()
+    });
+    showToast('toast-reg','¡Cuenta creada! Revisá tu email para confirmar.','ok');
+    setTimeout(() => switchTab('login'), 2000);
+  } catch(e) {
+    showToast('toast-reg', e.message.includes('already registered') ? 'Este email ya está registrado' : e.message, 'err');
+  }
+}
+
+// ─── GOOGLE ───────────────────────────────────────────────────
+async function loginGoogle() {
+  try {
+    const { error } = await supa.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/mito-rating-app-v3.html' }
+    });
+    if (error) throw error;
+  } catch(e) {
+    showToast('toast-login', 'Error con Google. Probá con email por ahora.', 'err');
+  }
+}
+
+// ─── PHONE OTP ────────────────────────────────────────────────
+async function sendOTP() {
+  const num = document.getElementById('phone-num').value.trim().replace(/\s/g,'');
+  phoneNum = '+54' + num;
+  showToast('toast-phone','Enviando código...','info');
+  try {
+    const { error } = await supa.auth.signInWithOtp({ phone: phoneNum });
+    if (error) throw error;
+    document.getElementById('phone-sent-to').textContent = `Código enviado a ${phoneNum}`;
+    document.getElementById('phone-step1').classList.remove('active');
+    document.getElementById('phone-step2').classList.add('active');
+    showToast('toast-phone','Código enviado por SMS','ok');
+  } catch(e) {
+    showToast('toast-phone', 'Error enviando código. Verificá el número.', 'err');
+  }
+}
+
+async function verifyOTP() {
+  const code = ['c1','c2','c3','c4','c5','c6'].map(id => document.getElementById(id).value).join('');
+  if (code.length < 6) return;
+  showToast('toast-phone','Verificando...','info');
+  try {
+    const { data, error } = await supa.auth.verifyOtp({ phone: phoneNum, token: code, type: 'sms' });
+    if (error) throw error;
+    await afterLogin(data.user);
+  } catch(e) {
+    showToast('toast-phone','Código incorrecto. Intentá de nuevo.','err');
+  }
+}
+
+async function resendOTP() {
+  await supa.auth.signInWithOtp({ phone: phoneNum });
+  showToast('toast-phone','Código reenviado','ok');
+}
+
+async function forgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showToast('toast-login','Ingresá tu email primero','err'); return; }
+  const { error } = await supa.auth.resetPasswordForEmail(email);
+  if (!error) showToast('toast-login','Te mandamos un email para resetear tu contraseña','ok');
+}
+
+// ─── POST LOGIN ───────────────────────────────────────────────
+async function afterLogin(user) {
+  // Verificar si es admin
+  const { data: jugador } = await supa.from('jugadores').select('*').eq('email', user.email).single();
+  // Guardar sesión local
+  localStorage.setItem('mito_user', JSON.stringify({ id: user.id, email: user.email, jugador }));
+  // Redirigir según rol
+  if (user.email === 'vranjican22@gmail.com' || user.email === 'info@mitodeportes.com.ar') {
+    window.location.href = 'mito-admin.html';
+  } else {
+    window.location.href = 'mito-rating-app-v3.html';
+  }
+}
+
+// ─── CHECK SESSION ────────────────────────────────────────────
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) await afterLogin(session.user);
+})();
+</script>
+</body>
+</html>

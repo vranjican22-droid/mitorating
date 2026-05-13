@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mito Rating</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const SUPA_URL = 'https://zvgpdvjosjtkqqidykdf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z3Bkdmpvc2p0a3FxaWR5a2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTExODMsImV4cCI6MjA5NDEyNzE4M30.D6Q_z_NO_dPkD0uwiEINhpIi9AU9X-lqquMCULsp37k';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+</script>
+<style>
+:root{
+  --green:#1a6b4a;--green-l:#e8f5ee;--green-m:#2d9e6b;--green-d:#0d3d2a;--green-b:#a8dcc1;
+  --amber:#c97d1a;--amber-l:#fef3e2;--red:#c0392b;--red-l:#fdecea;
+  --purple:#5b4fcf;--purple-l:#edeafc;
+  --g50:#f8f7f4;--g100:#f0ede8;--g200:#ddd9d2;--g400:#9c9890;--g600:#5e5a54;--g900:#1a1916;
+  --bg:#f8f7f4;--surf:#fff;--bdr:#e8e4dd;--txt:#1a1916;--muted:#7a766e;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;justify-content:center;}
+.shell{width:100%;max-width:430px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
+.status-bar{display:flex;justify-content:space-between;padding:10px 20px 4px;font-size:11px;font-weight:500;color:var(--g600);flex-shrink:0;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px;flex-shrink:0;}
+.logo{font-size:18px;font-weight:600;color:var(--green);letter-spacing:-.5px;}
+.page-ttl{font-size:17px;font-weight:600;letter-spacing:-.3px;display:none;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--surf);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--g600);position:relative;}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.active{display:flex;}
+.scroll{flex:1;overflow-y:auto;padding:0 16px 90px;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--surf);border-top:1px solid var(--bdr);padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:100;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:none;font-size:10px;color:var(--g400);font-family:'DM Sans',sans-serif;transition:color .15s;}
+.nb.on{color:var(--green);}
+.nb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.hero{background:var(--green-d);border-radius:var(--r);padding:20px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.05);border-radius:50%;}
+.rnum{font-size:50px;font-weight:300;line-height:1;font-family:'DM Mono',monospace;}
+.rdelta{font-size:12px;color:#6ee7a8;margin-top:4px;font-weight:500;}
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;}
+.pg{background:var(--green-l);color:var(--green-d);}
+.pa{background:var(--amber-l);color:var(--amber);}
+.pr{background:var(--red-l);color:var(--red);}
+.pp{background:var(--purple-l);color:var(--purple);}
+.pgr{background:var(--g100);color:var(--g600);}
+.pro-pill{background:linear-gradient(90deg,#5b4fcf,#2d9e6b);color:#fff;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:600;}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;font-family:'DM Mono',monospace;}
+.av-xl{width:56px;height:56px;font-size:18px;}
+.av-md{width:34px;height:34px;font-size:12px;}
+.av-sm{width:26px;height:26px;font-size:9px;}
+.avg{background:var(--green-l);color:var(--green-d);}
+.avp{background:var(--purple-l);color:var(--purple);}
+.ava{background:var(--amber-l);color:var(--amber);}
+.avr{background:var(--red-l);color:var(--red);}
+.avq{background:var(--g100);color:var(--g600);}
+.stat2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.sbox{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;}
+.sn{font-size:24px;font-weight:500;font-family:'DM Mono',monospace;}
+.sl{font-size:11px;color:var(--muted);margin-top:2px;}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--bdr);}
+.mrow:last-child{border-bottom:none;}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);padding:0 16px;margin:0 -16px 14px;overflow-x:auto;flex-shrink:0;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{font-size:13px;padding:10px 12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;}
+.tab.on{color:var(--green);border-bottom-color:var(--green);}
+.rrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--bdr);}
+.rrow:last-child{border-bottom:none;}
+.rme{background:var(--green-l);margin:0 -16px;padding:11px 16px;}
+.rpos{width:24px;font-size:13px;font-weight:600;text-align:center;flex-shrink:0;font-family:'DM Mono',monospace;}
+.tcard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.tcard.compat{border-color:var(--green-b);}
+.tcard.sponsored{border-color:#c97d1a;}
+.prog{height:4px;background:var(--g100);border-radius:2px;margin:8px 0;}
+.pfill{height:4px;border-radius:2px;background:var(--green-m);}
+.cb{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.3px;text-transform:uppercase;}
+.cby{background:var(--green-l);color:var(--green-d);}
+.cbn{background:var(--g100);color:var(--g400);}
+.cbs{background:var(--amber-l);color:var(--amber);}
+.flabel{font-size:12px;color:var(--muted);margin-bottom:5px;display:block;font-weight:500;}
+.fi{width:100%;padding:11px 14px;border:1px solid var(--bdr);border-radius:var(--rs);font-size:14px;background:var(--surf);color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:14px;appearance:none;}
+.fi:focus{border-color:var(--green-m);}
+.sgrid{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;margin-bottom:8px;}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s,transform .1s;}
+.btn:active{opacity:.85;transform:scale(.99);}
+.btng{background:var(--green);color:#fff;}
+.btns{width:auto;padding:8px 16px;font-size:12px;font-weight:600;border-radius:20px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.bsg{background:var(--green-l);color:var(--green-d);}
+.toast{background:var(--green-d);color:#a8dcc1;font-size:13px;padding:12px 16px;border-radius:var(--rs);margin-bottom:14px;text-align:center;display:none;font-weight:500;}
+.toast.show{display:block;}
+.toast-w{background:var(--amber-l);color:var(--amber);}
+.toast-e{background:var(--red-l);color:var(--red);}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal{background:var(--surf);border-radius:var(--r) var(--r) 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));width:100%;max-width:430px;max-height:88vh;overflow-y:auto;animation:slideUp .25s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.handle{width:36px;height:4px;background:var(--g200);border-radius:2px;margin:0 auto 20px;}
+.popt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:pointer;margin-bottom:8px;transition:border-color .15s,background .15s;}
+.popt.sel{border-color:var(--green-m);background:var(--green-l);}
+.preview{background:var(--g50);border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;display:none;}
+.sep{height:1px;background:var(--bdr);margin:16px 0;}
+.sec{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px;}
+.ndot{width:8px;height:8px;background:#e74c3c;border-radius:50%;position:absolute;top:0;right:0;}
+.empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;flex-direction:column;gap:12px;}
+.spinner{width:28px;height:28px;border:2px solid var(--bdr);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:13px;color:var(--muted);}
+.step-r{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bdr);}
+.step-r:last-child{border-bottom:none;}
+.stepn{width:28px;height:28px;border-radius:50%;background:var(--green-l);color:var(--green-d);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sponsor-tag{background:var(--amber-l);color:var(--amber);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;}
+.checkout-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;}
+.checkout-row:last-child{border-bottom:none;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page.active .scroll>*{animation:fadeIn .2s ease;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="status-bar"><span id="clock">9:41</span><span>●●●●●</span></div>
+  <div class="topbar">
+    <div class="logo" id="top-logo">Mito</div>
+    <div class="page-ttl" id="top-ttl"></div>
+    <div style="display:flex;gap:8px;">
+      <div class="ibtn" onclick="openNotifs()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="ndot" id="ndot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="pg-home" class="page active">
+    <div class="scroll">
+      <div id="home-loading" class="loading"><div class="spinner"></div><div class="loading-txt">Cargando tu perfil...</div></div>
+      <div id="home-content" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div class="av av-xl avg" id="home-av">MA</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+              <div style="font-size:17px;font-weight:600;letter-spacing:-.3px;" id="home-nombre">Martín Álvarez</div>
+              <span id="home-pro-badge"></span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;" id="home-club">Club Náutico · Buenos Aires</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <span class="pill pg">✓ Verificado</span>
+              <span class="pill pa" id="home-rol">Derecha</span>
+              <span class="pill pgr" id="home-pos">#47 BsAs</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Rating Mito</div>
+          <div class="rnum" id="home-rating">1.394</div>
+          <div class="rdelta" id="home-delta">↑ cargando...</div>
+          <canvas id="home-spark" width="180" height="36" style="position:absolute;bottom:16px;right:16px;opacity:.45;"></canvas>
+        </div>
+        <div id="pro-upsell-home"></div>
+        <div class="stat2">
+          <div class="sbox"><div class="sn" id="h-pj">—</div><div class="sl">partidos jugados</div></div>
+          <div class="sbox"><div class="sn" id="h-wr">—</div><div class="sl">win rate</div></div>
+          <div class="sbox"><div class="sn" id="h-racha">—</div><div class="sl">mejor racha</div></div>
+          <div class="sbox"><div class="sn" id="h-torn">—</div><div class="sl">torneos Mito</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="sec" style="margin-bottom:0;">Torneos compatibles</div>
+          <span style="font-size:12px;color:var(--green);cursor:pointer;font-weight:500;" onclick="goTo('torneos',document.querySelectorAll('.nb')[1])">Ver todos →</span>
+        </div>
+        <div id="home-torneos"><div class="loading"><div class="spinner"></div></div></div>
+        <div class="sep"></div>
+        <div class="sec">Últimos partidos</div>
+        <div id="home-matches"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TORNEOS -->
+  <div id="pg-torneos" class="page">
+    <div style="padding:0 16px;flex-shrink:0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <select class="fi" id="fil-z" onchange="loadTorneos()" style="margin-bottom:0;">
+          <option value="">Todas las zonas</option>
+          <option value="bsas" selected>Buenos Aires</option>
+          <option value="cordoba">Córdoba</option>
+          <option value="rosario">Rosario</option>
+        </select>
+        <select class="fi" id="fil-n" onchange="loadTorneos()" style="margin-bottom:0;">
+          <option value="compat">Compatible</option>
+          <option value="todos">Todos</option>
+        </select>
+      </div>
+      <div class="tabs" style="margin-bottom:0;">
+        <div class="tab on" onclick="switchTTab(this,'tt-p')">Próximos</div>
+        <div class="tab" onclick="switchTTab(this,'tt-m')">Mis inscripciones</div>
+      </div>
+    </div>
+    <div class="scroll" style="padding-top:12px;">
+      <div id="tt-p"><div class="loading"><div class="spinner"></div><div class="loading-txt">Cargando torneos...</div></div></div>
+      <div id="tt-m" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- CARGAR -->
+  <div id="pg-cargar" class="page">
+    <div class="scroll">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Registrá el resultado · los 4 jugadores recibirán notificación para confirmar</div>
+      <label class="flabel">Tu pareja</label>
+      <select class="fi" id="sel-s" onchange="calcPreview()">
+        <option value="">Seleccionar compañero...</option>
+      </select>
+      <label class="flabel">Rival 1 (derecha)</label>
+      <select class="fi" id="sel-r1" onchange="calcPreview()">
+        <option value="">Seleccionar rival...</option>
+      </select>
+      <label class="flabel">Rival 2 (revés)</label>
+      <select class="fi" id="sel-r2" onchange="calcPreview()">
+        <option value="">Seleccionar rival...</option>
+      </select>
+      <label class="flabel">Set 1</label>
+      <div class="sgrid"><input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Nos" id="s1a" oninput="calcPreview()"><div style="text-align:center;color:var(--muted);font-size:16px;">–</div><input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Ellos" id="s1b" oninput="calcPreview()"></div>
+      <label class="flabel" style="margin-top:8px;">Set 2</label>
+      <div class="sgrid" style="margin-bottom:10px;"><input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Nos" id="s2a" oninput="calcPreview()"><div style="text-align:center;color:var(--muted);font-size:16px;">–</div><input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Ellos" id="s2b" oninput="calcPreview()"></div>
+      <div class="preview" id="prev-box">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;">Impacto estimado</div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;">Tu rating</span><span style="font-size:16px;font-weight:600;font-family:'DM Mono',monospace;" id="prev-v">—</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;"><span style="font-size:13px;color:var(--muted);">Prob. esperada ganando</span><span style="font-size:13px;font-family:'DM Mono',monospace;" id="prev-p">—</span></div>
+      </div>
+      <div id="toast-c" class="toast"></div>
+      <button class="btn btng" onclick="registrarPartido()">Registrar partido</button>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <div id="pg-ranking" class="page">
+    <div style="padding:0 16px;flex-shrink:0;">
+      <div class="tabs" style="margin-bottom:0;">
+        <div class="tab on" onclick="switchRkTab(this,'rk-b')">Buenos Aires</div>
+        <div class="tab" onclick="switchRkTab(this,'rk-a')">Argentina</div>
+        <div class="tab" onclick="switchRkTab(this,'rk-c')">Mi club</div>
+      </div>
+    </div>
+    <div class="scroll" style="padding-top:10px;">
+      <div id="rk-b"><div class="loading"><div class="spinner"></div><div class="loading-txt">Cargando ranking...</div></div></div>
+      <div id="rk-a" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="rk-c" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div id="pg-perfil" class="page">
+    <div class="scroll">
+      <div style="background:var(--green-d);border-radius:var(--r);padding:20px;margin-bottom:12px;color:#fff;text-align:center;">
+        <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Mito Rating</div>
+        <div style="font-size:48px;font-weight:300;font-family:'DM Mono',monospace;letter-spacing:-1px;" id="p-r-big">1.394</div>
+        <div style="font-size:13px;opacity:.7;margin-bottom:14px;" id="p-name-pos">Martín Álvarez · Buenos Aires</div>
+        <button class="btns bsg" onclick="shareRating()">Compartir en WhatsApp</button>
+      </div>
+      <div id="pro-status-card"></div>
+      <div id="pro-upsell-perfil"></div>
+      <div class="sec">Tienda Mito — recomendado para tu nivel</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;" id="productos-list">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="card">
+        <div class="sec" style="margin-bottom:12px;">Evolución del rating</div>
+        <canvas id="evo-chart" height="80"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);"><span>3 meses atrás</span><span>Hoy</span></div>
+      </div>
+      <div class="sep"></div>
+      <div class="card" style="cursor:pointer;" onclick="goTo('clubes',document.querySelectorAll('.nb')[4])">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;background:var(--green-l);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--green-d);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <div><div style="font-size:14px;font-weight:600;">Panel de club</div><div style="font-size:12px;color:var(--muted);">Publicá torneos y gestioná tu comunidad</div></div>
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;margin-left:auto;flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUBES -->
+  <div id="pg-clubes" class="page">
+    <div class="scroll">
+      <div style="background:var(--green-d);border-radius:var(--r);padding:18px;margin-bottom:12px;color:#fff;">
+        <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px;" id="club-nombre-header">Mi Club</div>
+        <div style="font-size:22px;font-weight:600;letter-spacing:-.5px;margin-bottom:4px;">Panel de club</div>
+        <div style="font-size:12px;opacity:.7;">Publicá torneos · cobro automático · cuadros por rating</div>
+      </div>
+      <div class="stat2">
+        <div class="sbox"><div class="sn" id="club-jugadores">—</div><div class="sl">jugadores activos</div></div>
+        <div class="sbox"><div class="sn" id="club-torneos-n">—</div><div class="sl">torneos realizados</div></div>
+        <div class="sbox"><div class="sn">$0</div><div class="sl">inversión requerida</div></div>
+        <div class="sbox"><div class="sn">10%</div><div class="sl">fee Mito</div></div>
+      </div>
+      <div class="sec">Publicar nuevo torneo</div>
+      <div class="card">
+        <label class="flabel">Nombre del torneo</label>
+        <input class="fi" type="text" id="c-nom" placeholder="Ej: Open Náutico — Junio">
+        <label class="flabel">Fecha de inicio</label>
+        <input class="fi" type="date" id="c-fec">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><label class="flabel">Rating mínimo</label><input class="fi" type="number" id="c-rmin" placeholder="1200" style="margin-bottom:0;"></div>
+          <div><label class="flabel">Rating máximo</label><input class="fi" type="number" id="c-rmax" placeholder="1600" style="margin-bottom:0;"></div>
+        </div>
+        <div style="height:14px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div><label class="flabel">Cupos (parejas)</label><input class="fi" type="number" id="c-cup" placeholder="24" style="margin-bottom:0;"></div>
+          <div><label class="flabel">Precio por pareja ($)</label><input class="fi" type="number" id="c-pre" placeholder="10000" style="margin-bottom:0;"></div>
+        </div>
+        <div style="height:14px;"></div>
+        <select class="fi" id="c-fmt">
+          <option value="Round Robin + finales">Round Robin + finales</option>
+          <option value="Eliminación directa">Eliminación directa</option>
+          <option value="Grupos + playoffs">Grupos + playoffs</option>
+        </select>
+        <div style="background:var(--amber-l);border:1px solid #f5c4b3;border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="c-spon" style="width:16px;height:16px;accent-color:var(--amber);">
+            <div><div style="font-size:13px;font-weight:600;color:var(--amber);">Activar sponsorship Mito</div><div style="font-size:11px;color:var(--muted);">Mito aporta premios · torneo destacado · $0 costo</div></div>
+          </label>
+        </div>
+        <div id="toast-club" class="toast"></div>
+        <button class="btn btng" onclick="pubTorneo()">Publicar torneo</button>
+      </div>
+      <div class="sep"></div>
+      <div class="sec">Tus torneos</div>
+      <div id="club-t"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <nav class="navbar">
+    <button class="nb on" onclick="goTo('home',this)" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</button>
+    <button class="nb" onclick="goTo('torneos',this)" aria-label="Torneos"><svg viewBox="0 0 24 24"><path d="M8 21h8m-4-4v4M5 3h14l-1 7a7 7 0 0 1-12 0z"/></svg>Torneos</button>
+    <button class="nb" onclick="goTo('cargar',this)" aria-label="Partido"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Partido</button>
+    <button class="nb" onclick="goTo('ranking',this)" aria-label="Ranking"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Ranking</button>
+    <button class="nb" onclick="goTo('perfil',this)" aria-label="Perfil"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</button>
+  </nav>
+</div>
+
+<!-- MODALES -->
+<div class="modal-ov" id="m-insc"><div class="modal"><div class="handle"></div><div id="m-insc-body"></div></div></div>
+<div class="modal-ov" id="m-pro">
+  <div class="modal">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div><div style="font-size:18px;font-weight:600;color:var(--purple);">Mito Pro</div><div style="font-size:12px;color:var(--muted);">Desbloqueá todo el potencial</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-pro').classList.remove('show')">✕</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>15% descuento en todas las inscripciones</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>Perfil destacado en el ranking</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>Estadísticas avanzadas de juego</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);"><div style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;"></div>Análisis de video con IA (próximamente)</div>
+    </div>
+    <div style="background:var(--purple-l);border-radius:var(--r);padding:14px;margin-bottom:16px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Con 3 torneos/mes de $8.000 c/u</div>
+      <div style="font-size:14px;font-weight:500;">Ahorrás <span style="color:var(--green);font-weight:600;font-family:'DM Mono',monospace;">$3.600</span> — la suscripción se paga sola</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="padding:12px;border:1px solid var(--bdr);border-radius:var(--rs);text-align:center;cursor:pointer;" onclick="activatePro('mensual')">
+        <div style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;">$4.500</div>
+        <div style="font-size:11px;color:var(--muted);">por mes</div>
+      </div>
+      <div style="padding:12px;border:2px solid var(--purple);border-radius:var(--rs);text-align:center;background:var(--purple-l);cursor:pointer;" onclick="activatePro('anual')">
+        <div style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:var(--purple);">$3.200</div>
+        <div style="font-size:11px;color:var(--purple);">por mes · anual ★</div>
+      </div>
+    </div>
+    <button class="btn" style="background:var(--purple);color:#fff;" onclick="activatePro('mensual')">Activar Mito Pro</button>
+  </div>
+</div>
+<div class="modal-ov" id="m-store"><div class="modal"><div class="handle"></div><div id="m-store-body"></div></div></div>
+<div class="modal-ov" id="m-notifs">
+  <div class="modal">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:600;">Notificaciones</div>
+      <div class="ibtn" onclick="document.getElementById('m-notifs').classList.remove('show')">✕</div>
+    </div>
+    <div id="notifs-body"></div>
+  </div>
+</div>
+
+<script>
+// ─── ESTADO GLOBAL ───────────────────────────────────────────
+let MY_PLAYER = null;
+let MY_RATING = 1200;
+let IS_PRO = false;
+let ALL_PLAYERS = [];
+let currentT = null, selPartner = null, inscMode = 'pareja';
+
+// ─── HELPERS ─────────────────────────────────────────────────
+const fmt$ = n => '$' + Math.round(n).toLocaleString('es-AR');
+const avColor = i => ['avg','avp','ava','avr','avq'][i % 5];
+const initials = n => n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+
+function showToast(id, msg, type='') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' toast-'+type : '');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function goTo(pg, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('active');
+  btn.classList.add('on');
+  const titles = {home:'',torneos:'Torneos',cargar:'Cargar partido',ranking:'Ranking',perfil:'Mi perfil',clubes:'Panel de club'};
+  const lo = document.getElementById('top-logo'), ttl = document.getElementById('top-ttl');
+  if (pg==='home') { lo.style.display=''; ttl.style.display='none'; }
+  else { lo.style.display='none'; ttl.style.display=''; ttl.textContent=titles[pg]||''; }
+  if (pg==='torneos') loadTorneos();
+  if (pg==='ranking') loadRanking();
+  if (pg==='perfil') loadPerfil();
+  if (pg==='clubes') loadClub();
+}
+
+// ─── SUPABASE: CARGAR JUGADOR ACTUAL ─────────────────────────
+async function loadMyPlayer() {
+  try {
+    const { data, error } = await supa
+      .from('jugadores')
+      .select('*')
+      .eq('email', 'martin@mito.com')
+      .single();
+    if (error) throw error;
+    MY_PLAYER = data;
+    MY_RATING = parseFloat(data.rating);
+    IS_PRO = data.es_pro;
+    renderHome();
+  } catch(e) {
+    console.error('Error cargando jugador:', e);
+    MY_PLAYER = { id: null, nombre: 'Martín Álvarez', rating: 1394, rol: 'derecha', partidos_jugados: 47, partidos_ganados: 29, mejor_racha: 8, es_pro: false, avatar_iniciales: 'MA', ciudad: 'Buenos Aires' };
+    MY_RATING = 1394;
+    renderHome();
+  }
+}
+
+async function loadAllPlayers() {
+  try {
+    const { data } = await supa.from('jugadores').select('id,nombre,rating,rol,avatar_iniciales').order('rating', { ascending: false });
+    ALL_PLAYERS = data || [];
+    renderPlayerSelects();
+  } catch(e) {
+    ALL_PLAYERS = [];
+  }
+}
+
+function renderHome() {
+  const p = MY_PLAYER;
+  document.getElementById('home-loading').style.display = 'none';
+  document.getElementById('home-content').style.display = 'block';
+  document.getElementById('home-av').textContent = p.avatar_iniciales || initials(p.nombre);
+  document.getElementById('home-nombre').textContent = p.nombre;
+  document.getElementById('home-rol').textContent = p.rol === 'derecha' ? 'Derecha' : 'Revés';
+  document.getElementById('home-rating').textContent = parseFloat(p.rating).toFixed(0);
+  document.getElementById('p-r-big').textContent = parseFloat(p.rating).toFixed(0);
+  document.getElementById('p-name-pos').textContent = p.nombre + ' · ' + p.ciudad;
+  document.getElementById('h-pj').textContent = p.partidos_jugados || 0;
+  const wr = p.partidos_jugados > 0 ? Math.round((p.partidos_ganados / p.partidos_jugados) * 100) : 0;
+  document.getElementById('h-wr').textContent = wr + '%';
+  document.getElementById('h-racha').textContent = p.mejor_racha || 0;
+  document.getElementById('h-torn').textContent = '3';
+  document.getElementById('home-delta').textContent = '↑ rating actualizado en vivo';
+  if (IS_PRO) {
+    document.getElementById('home-pro-badge').innerHTML = '<span class="pro-pill">PRO</span>';
+    document.getElementById('pro-upsell-home').innerHTML = '';
+  } else {
+    document.getElementById('pro-upsell-home').innerHTML = `
+      <div style="background:var(--purple-l);border:1px solid #afa9ec;border-radius:var(--r);padding:14px;margin-bottom:12px;cursor:pointer;" onclick="document.getElementById('m-pro').classList.add('show')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:9px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⭐</div>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--purple);">Activá Mito Pro</div><div style="font-size:12px;color:var(--muted);">15% desc. en torneos · stats avanzadas · $4.500/mes</div></div>
+          <div style="font-size:13px;font-weight:600;color:var(--purple);">→</div>
+        </div>
+      </div>`;
+  }
+  loadHomeMatches();
+  loadHomeTorneos();
+  renderSparkline();
+}
+
+// ─── PARTIDOS ─────────────────────────────────────────────────
+async function loadHomeMatches() {
+  if (!MY_PLAYER?.id) {
+    renderFakeMatches();
+    return;
+  }
+  try {
+    const { data } = await supa
+      .from('historial_rating')
+      .select('*, partido:partido_id(set1_a,set1_b,set2_a,set2_b,ganador,created_at)')
+      .eq('jugador_id', MY_PLAYER.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (!data || data.length === 0) { renderFakeMatches(); return; }
+    document.getElementById('home-matches').innerHTML = data.map(h => `
+      <div class="mrow">
+        <div>
+          <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;">${h.partido ? h.partido.set1_a+'-'+h.partido.set1_b+' / '+h.partido.set2_a+'-'+h.partido.set2_b : '—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">${new Date(h.created_at).toLocaleDateString('es-AR')}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="pill ${h.delta>=0?'pg':'pr'}">${h.delta>=0?'+':''}${parseFloat(h.delta).toFixed(0)} pts</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;">${parseFloat(h.rating_antes).toFixed(0)}→${parseFloat(h.rating_despues).toFixed(0)}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) { renderFakeMatches(); }
+}
+
+function renderFakeMatches() {
+  const matches = [
+    {res:'6-3 / 6-4',d:+14,old:1380,nw:1394,when:'hoy'},
+    {res:'4-6 / 6-3 / 6-7',d:-9,old:1389,nw:1380,when:'ayer'},
+    {res:'6-1 / 6-2',d:+21,old:1368,nw:1389,when:'lun'},
+  ];
+  document.getElementById('home-matches').innerHTML = matches.map(m => `
+    <div class="mrow">
+      <div><div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;">${m.res}</div><div style="font-size:11px;color:var(--muted);margin-top:3px;">${m.when}</div></div>
+      <div style="text-align:right;"><span class="pill ${m.d>0?'pg':'pr'}">${m.d>0?'+':''}${m.d} pts</span><div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;">${m.old}→${m.nw}</div></div>
+    </div>`).join('');
+}
+
+// ─── TORNEOS ─────────────────────────────────────────────────
+async function loadHomeTorneos() {
+  try {
+    const { data } = await supa
+      .from('torneos')
+      .select('*')
+      .eq('zona', 'bsas')
+      .eq('estado', 'abierto')
+      .lte('rating_min', MY_RATING)
+      .gte('rating_max', MY_RATING)
+      .limit(2);
+    document.getElementById('home-torneos').innerHTML = (data||[]).map(t => `
+      <div style="background:var(--surf);border:1px solid var(--green-b);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;" onclick="goTo('torneos',document.querySelectorAll('.nb')[1])">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+          <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">${t.nombre}</div><div style="font-size:11px;color:var(--muted);">${t.fecha_inicio}</div></div>
+          <span class="cb cby">Compatible</span>
+        </div>
+        <div style="display:flex;gap:5px;">
+          <span class="pill pgr">${t.cupos_ocupados}/${t.cupos_max}</span>
+          <span class="pill pa">${fmt$(t.precio)}</span>
+        </div>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--muted);padding:8px 0;">No hay torneos compatibles próximos.</div>';
+  } catch(e) {
+    document.getElementById('home-torneos').innerHTML = '<div style="font-size:12px;color:var(--muted);">Error cargando torneos.</div>';
+  }
+}
+
+async function loadTorneos() {
+  const zona = document.getElementById('fil-z')?.value || '';
+  const nivel = document.getElementById('fil-n')?.value || 'compat';
+  const elP = document.getElementById('tt-p');
+  const elM = document.getElementById('tt-m');
+  elP.innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-txt">Cargando...</div></div>';
+  try {
+    let q = supa.from('torneos').select('*').eq('estado','abierto').order('fecha_inicio');
+    if (zona) q = q.eq('zona', zona);
+    if (nivel === 'compat') { q = q.lte('rating_min', MY_RATING).gte('rating_max', MY_RATING); }
+    const { data } = await q;
+    const torneos = data || [];
+    elP.innerHTML = torneos.length > 0
+      ? torneos.map(t => renderTCard(t)).join('')
+      : '<div class="empty">No hay torneos con ese filtro</div>';
+    if (elM) elM.innerHTML = '<div class="empty">Todavía no estás inscripto en ningún torneo</div>';
+  } catch(e) {
+    elP.innerHTML = '<div class="empty">Error cargando torneos. Verificá tu conexión.</div>';
+  }
+}
+
+function renderTCard(t) {
+  const compat = MY_RATING >= t.rating_min && MY_RATING <= t.rating_max;
+  const pct = Math.round((t.cupos_ocupados / t.cupos_max) * 100);
+  const full = t.cupos_ocupados >= t.cupos_max;
+  const discP = IS_PRO ? Math.round(t.precio * 0.85) : t.precio;
+  const fee = Math.round(discP * 0.10);
+  const total = discP + fee;
+  return `
+    <div class="tcard${t.patrocinado?' sponsored':compat?' compat':''}">
+      ${t.patrocinado ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><span class="sponsor-tag">Patrocinado por ${t.sponsor_nombre}</span><span style="font-size:11px;color:var(--muted);">Premio: ${t.sponsor_premio}</span></div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;margin-bottom:2px;">${t.nombre}</div><div style="font-size:12px;color:var(--muted);">${t.fecha_inicio}</div></div>
+        <span class="cb ${t.patrocinado?'cbs':compat?'cby':'cbn'}">${t.patrocinado?'Sponsor':compat?'✓ Compat':'Fuera nivel'}</span>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;">
+        <span class="pill pgr">Rating ${t.rating_min}–${t.rating_max}</span>
+        <span class="pill pa">${fmt$(discP)}${IS_PRO?' ✓Pro':''}</span>
+      </div>
+      <div class="prog"><div class="pfill" style="width:${pct}%;"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">${t.cupos_ocupados}/${t.cupos_max} inscriptos · ${t.formato}</div>
+      ${t.inscripto_local
+        ? `<div style="padding:10px;background:var(--green-l);border-radius:8px;text-align:center;font-size:13px;font-weight:600;color:var(--green-d);">✓ Inscripto</div>`
+        : full
+          ? `<div style="padding:10px;background:var(--g100);border-radius:8px;text-align:center;font-size:13px;color:var(--muted);">Cupos completos</div>`
+          : compat
+            ? `<button class="btn btng" style="padding:11px;" onclick="openInsc('${t.id}')">Inscribirme · ${fmt$(total)}</button>`
+            : `<div style="padding:10px;background:var(--g100);border-radius:8px;text-align:center;font-size:12px;color:var(--muted);">Tu rating (${MY_RATING}) no cumple el requisito</div>`
+      }
+    </div>`;
+}
+
+// ─── INSCRIPCION ──────────────────────────────────────────────
+async function openInsc(torneoId) {
+  const { data: t } = await supa.from('torneos').select('*').eq('id', torneoId).single();
+  currentT = t;
+  selPartner = null; inscMode = 'pareja';
+  renderInscModal();
+  document.getElementById('m-insc').classList.add('show');
+}
+
+function renderInscModal() {
+  const t = currentT;
+  const discP = IS_PRO ? Math.round(t.precio * 0.85) : t.precio;
+  const fee = Math.round(discP * 0.10);
+  const total = discP + fee;
+  document.getElementById('m-insc-body').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div><div style="font-size:16px;font-weight:600;">${t.nombre}</div><div style="font-size:12px;color:var(--muted);">${t.fecha_inicio}</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-insc').classList.remove('show')">✕</div>
+    </div>
+    <div style="background:var(--g50);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+      ${IS_PRO ? `<div class="checkout-row"><span style="color:var(--muted);">Precio base</span><span style="text-decoration:line-through;color:var(--muted);">${fmt$(t.precio)}</span></div><div class="checkout-row"><span style="color:var(--green);">Descuento Pro (15%)</span><span style="color:var(--green);">− ${fmt$(t.precio - discP)}</span></div>` : ''}
+      <div class="checkout-row"><span style="color:var(--muted);">Inscripción</span><span>${fmt$(discP)}</span></div>
+      <div class="checkout-row"><span style="color:var(--muted);">Fee Mito (10%)</span><span>${fmt$(fee)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:600;"><span>Total</span><span style="font-family:'DM Mono',monospace;">${fmt$(total)}</span></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">¿Cómo querés anotarte?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div id="opt-p" onclick="setIM('pareja')" style="padding:11px;border:2px solid var(--green-m);border-radius:10px;background:var(--green-l);text-align:center;cursor:pointer;"><div style="font-size:18px;margin-bottom:3px;">👥</div><div style="font-size:12px;font-weight:600;color:var(--green-d);">Con pareja</div></div>
+      <div id="opt-s" onclick="setIM('solo')" style="padding:11px;border:1px solid var(--bdr);border-radius:10px;text-align:center;cursor:pointer;"><div style="font-size:18px;margin-bottom:3px;">🙋</div><div style="font-size:12px;color:var(--muted);">Buscar pareja</div></div>
+    </div>
+    <div id="insc-sec"></div>
+    <div id="toast-insc" class="toast"></div>
+    <button class="btn btng" onclick="confirmarInsc()">Confirmar · ${fmt$(total)}</button>`;
+  renderInscSec();
+}
+
+function setIM(mode) {
+  inscMode = mode;
+  ['p','s'].forEach(x => {
+    const el = document.getElementById('opt-'+x);
+    if (!el) return;
+    const active = (x==='p'&&mode==='pareja') || (x==='s'&&mode==='solo');
+    el.style.cssText = active
+      ? 'padding:11px;border:2px solid var(--green-m);border-radius:10px;background:var(--green-l);text-align:center;cursor:pointer;'
+      : 'padding:11px;border:1px solid var(--bdr);border-radius:10px;text-align:center;cursor:pointer;';
+    el.querySelector('div:last-child').style.color = active ? 'var(--green-d)' : 'var(--muted)';
+  });
+  renderInscSec();
+}
+
+function renderInscSec() {
+  const el = document.getElementById('insc-sec');
+  if (!el) return;
+  const others = ALL_PLAYERS.filter(p => p.id !== MY_PLAYER?.id).slice(0, 4);
+  if (inscMode === 'solo') {
+    el.innerHTML = `<div style="background:var(--g50);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">El sistema te conecta con jugadores sin pareja con rating compatible.</div>
+      ${others.map((p,i) => `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surf);border-radius:8px;border:1px solid var(--bdr);margin-bottom:6px;">
+        <div class="av av-sm ${avColor(i)}">${p.avatar_iniciales||initials(p.nombre)}</div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;">${p.nombre}</div><div style="font-size:11px;color:var(--muted);">${parseFloat(p.rating).toFixed(0)} · ${p.rol}</div></div>
+        <button class="btns bsg" style="padding:5px 12px;" onclick="selPartner='${p.id}';this.textContent='Enviada ✓'">Invitar</button>
+      </div>`).join('')}
+    </div>`;
+  } else {
+    el.innerHTML = `<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Elegí tu pareja</div>
+      ${others.map((p,i) => `<div class="popt${selPartner===p.id?' sel':''}" onclick="selPartner='${p.id}';renderInscSec()">
+        <div class="av av-md ${avColor(i)}">${p.avatar_iniciales||initials(p.nombre)}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;">${p.nombre}</div><div style="font-size:11px;color:var(--muted);">${parseFloat(p.rating).toFixed(0)} · ${p.rol}</div></div>
+        ${selPartner===p.id?'<span style="color:var(--green);font-size:18px;">✓</span>':''}
+      </div>`).join('')}
+      <div style="height:8px;"></div>`;
+  }
+}
+
+async function confirmarInsc() {
+  if (inscMode === 'pareja' && !selPartner) {
+    showToast('toast-insc', 'Seleccioná una pareja primero', 'w'); return;
+  }
+  const t = currentT;
+  try {
+    const { error } = await supa.from('inscripciones').insert({
+      torneo_id: t.id,
+      jugador1_id: MY_PLAYER?.id,
+      jugador2_id: selPartner || null,
+      modo: inscMode,
+      precio_pagado: IS_PRO ? Math.round(t.precio * 0.85) : t.precio,
+      descuento_pro: IS_PRO,
+      fee_mito: Math.round((IS_PRO ? Math.round(t.precio * 0.85) : t.precio) * 0.10),
+      estado: 'confirmada'
+    });
+    if (error) throw error;
+    await supa.from('torneos').update({ cupos_ocupados: t.cupos_ocupados + 1 }).eq('id', t.id);
+    showToast('toast-insc', '¡Inscripto! Notificaciones enviadas.');
+    setTimeout(() => { document.getElementById('m-insc').classList.remove('show'); loadTorneos(); loadHomeTorneos(); }, 1800);
+  } catch(e) {
+    showToast('toast-insc', 'Error al inscribirse. Intentá de nuevo.', 'e');
+  }
+}
+
+// ─── CARGAR PARTIDO ───────────────────────────────────────────
+function renderPlayerSelects() {
+  const others = ALL_PLAYERS.filter(p => p.id !== MY_PLAYER?.id);
+  ['sel-s','sel-r1','sel-r2'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const labels = ['compañero...','rival 1...','rival 2...'];
+    el.innerHTML = `<option value="">Seleccionar ${labels[i]}</option>` +
+      others.map(p => `<option value="${p.id}" data-r="${p.rating}">${p.nombre} — ${parseFloat(p.rating).toFixed(0)}</option>`).join('');
+  });
+}
+
+function calcPreview() {
+  const s1a = +document.getElementById('s1a').value || 0;
+  const s1b = +document.getElementById('s1b').value || 0;
+  if (!s1a && !s1b) return;
+  const s2a = +document.getElementById('s2a').value || 0;
+  const s2b = +document.getElementById('s2b').value || 0;
+  const win = (s1a>s1b?1:0) + (s2a>s2b?1:0) >= 1;
+  const margin = Math.abs(s1a-s1b) + Math.abs(s2a-s2b);
+  const mm = margin>6 ? 1.5 : margin>3 ? 1.0 : 0.7;
+  const Rb = 1450;
+  const Ea = 1 / (1 + Math.pow(10, (Rb - MY_RATING) / 400));
+  const delta = Math.round(32 * mm * ((win?1:0) - Ea));
+  const box = document.getElementById('prev-box');
+  const val = document.getElementById('prev-v');
+  box.style.display = 'block';
+  val.textContent = (delta>=0?'+':'') + delta + ' pts → ' + (MY_RATING + delta);
+  val.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('prev-p').textContent = Math.round(Ea*100) + '%';
+}
+
+async function registrarPartido() {
+  const s = document.getElementById('sel-s').value;
+  const r1 = document.getElementById('sel-r1').value;
+  const r2 = document.getElementById('sel-r2').value;
+  if (!s || !r1 || !r2) { showToast('toast-c', 'Completá todos los campos', 'w'); return; }
+  const s1a = +document.getElementById('s1a').value || 6;
+  const s1b = +document.getElementById('s1b').value || 3;
+  const s2a = +document.getElementById('s2a').value || 6;
+  const s2b = +document.getElementById('s2b').value || 4;
+  const win = (s1a>s1b?1:0) + (s2a>s2b?1:0) >= 1;
+  showToast('toast-c', 'Registrando partido...');
+  try {
+    const { data: partido, error } = await supa.from('partidos').insert({
+      jugador1_id: MY_PLAYER?.id,
+      jugador2_id: s,
+      jugador3_id: r1,
+      jugador4_id: r2,
+      set1_a: s1a, set1_b: s1b,
+      set2_a: s2a, set2_b: s2b,
+      ganador: win ? 'AB' : 'CD',
+      registrado_por: MY_PLAYER?.id,
+      confirmado_por_j1: true
+    }).select().single();
+    if (error) throw error;
+    showToast('toast-c', '✓ Partido registrado. Los 3 jugadores restantes recibieron notificación para confirmar.');
+    setTimeout(() => goTo('home', document.querySelector('.nb')), 2000);
+  } catch(e) {
+    showToast('toast-c', 'Error al registrar. Intentá de nuevo.', 'e');
+  }
+}
+
+// ─── RANKING ─────────────────────────────────────────────────
+async function loadRanking() {
+  try {
+    const { data } = await supa
+      .from('jugadores')
+      .select('id,nombre,rating,ciudad,club_id,avatar_iniciales')
+      .order('rating', { ascending: false })
+      .limit(20);
+    const players = data || [];
+    ['rk-b','rk-a','rk-c'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = players.map((p, i) => {
+        const isMe = p.id === MY_PLAYER?.id;
+        return `<div class="rrow${isMe?' rme':''}">
+          <div class="rpos" style="color:${i<3?'var(--green-d)':'var(--muted)'};">${i+1}</div>
+          <div class="av av-md ${avColor(i)}">${p.avatar_iniciales||initials(p.nombre)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:${isMe?'600':'400'};">${p.nombre}${isMe?' (vos)':''}</div>
+            <div style="font-size:11px;color:var(--muted);">${p.ciudad||'Buenos Aires'}</div>
+          </div>
+          <div style="font-size:14px;font-weight:600;color:${isMe?'var(--green)':'var(--txt)'};font-family:'DM Mono',monospace;">${parseFloat(p.rating).toFixed(0)}</div>
+        </div>`;
+      }).join('');
+    });
+  } catch(e) {
+    document.getElementById('rk-b').innerHTML = '<div class="empty">Error cargando ranking.</div>';
+  }
+}
+
+function switchRkTab(tab, show) {
+  document.querySelectorAll('#pg-ranking .tab').forEach(t => t.classList.remove('on'));
+  tab.classList.add('on');
+  ['rk-b','rk-a','rk-c'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id===show ? 'block' : 'none';
+  });
+}
+
+function switchTTab(tab, show) {
+  document.querySelectorAll('#pg-torneos .tab').forEach(t => t.classList.remove('on'));
+  tab.classList.add('on');
+  ['tt-p','tt-m'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id===show ? 'block' : 'none';
+  });
+}
+
+// ─── PERFIL ───────────────────────────────────────────────────
+async function loadPerfil() {
+  try {
+    const { data } = await supa.from('productos').select('*').eq('activo', true);
+    document.getElementById('productos-list').innerHTML = (data||[]).map((p,i) => `
+      <div style="background:var(--g50);border-radius:10px;padding:12px;border:1px solid var(--bdr);cursor:pointer;" onclick="openStore(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+        <div style="width:100%;height:64px;background:${i%2===0?'var(--green-l)':'var(--amber-l)'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px;">${p.imagen_emoji||'🏏'}</div>
+        <div style="font-size:12px;font-weight:600;">${p.nombre}</div>
+        <div style="font-size:14px;font-weight:600;color:var(--green);margin-top:4px;font-family:'DM Mono',monospace;">${fmt$(IS_PRO ? Math.round(p.precio*.85) : p.precio)}</div>
+        ${IS_PRO ? `<div style="font-size:11px;text-decoration:line-through;color:var(--muted);">${fmt$(p.precio)}</div>` : ''}
+      </div>`).join('');
+  } catch(e) {}
+  renderProStatusCard();
+  renderEvoChart();
+}
+
+function renderProStatusCard() {
+  const el = document.getElementById('pro-status-card');
+  const eu = document.getElementById('pro-upsell-perfil');
+  if (IS_PRO) {
+    el.innerHTML = `<div style="background:var(--purple);border-radius:var(--r);padding:16px;margin-bottom:12px;color:#fff;display:flex;align-items:center;gap:10px;">
+      <div style="font-size:24px;">⭐</div>
+      <div><div style="font-size:15px;font-weight:600;">Mito Pro activo</div><div style="font-size:12px;opacity:.8;">15% descuento · estadísticas avanzadas</div></div>
+    </div>`;
+    eu.innerHTML = '';
+  } else {
+    el.innerHTML = '';
+    eu.innerHTML = `<div style="background:var(--purple-l);border:1px solid #afa9ec;border-radius:var(--r);padding:14px;margin-bottom:12px;cursor:pointer;" onclick="document.getElementById('m-pro').classList.add('show')">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:24px;">⭐</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:600;color:var(--purple);">Activá Mito Pro</div><div style="font-size:12px;color:var(--muted);">$4.500/mes · se paga solo con el descuento en torneos</div></div>
+        <div style="color:var(--purple);font-weight:600;">→</div>
+      </div>
+    </div>`;
+  }
+}
+
+function renderEvoChart() {
+  setTimeout(() => {
+    const ctx = document.getElementById('evo-chart');
+    if (!ctx || ctx._done) return; ctx._done = true;
+    new Chart(ctx.getContext('2d'), {
+      type: 'line',
+      data: { labels: ['Feb','Mar','Abr','May'], datasets: [{ data: [1310,1325,1355,1380,1394], borderColor: '#1a6b4a', borderWidth: 2, pointRadius: 0, tension: .4, fill: true, backgroundColor: 'rgba(26,107,74,.07)' }] },
+      options: { responsive: true, animation: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: true, ticks: { font: { size: 10 }, color: '#9c9890' } }, y: { display: true, ticks: { font: { size: 10, family: "'DM Mono',monospace" }, color: '#9c9890' } } } }
+    });
+  }, 100);
+}
+
+// ─── TIENDA ───────────────────────────────────────────────────
+function openStore(prod) {
+  if (typeof prod === 'string') prod = JSON.parse(prod.replace(/&quot;/g,'"'));
+  const discP = IS_PRO ? Math.round(prod.precio * .85) : prod.precio;
+  document.getElementById('m-store-body').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:600;">${prod.nombre}</div>
+      <div class="ibtn" onclick="document.getElementById('m-store').classList.remove('show')">✕</div>
+    </div>
+    <div style="width:100%;height:120px;background:var(--green-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:16px;">${prod.imagen_emoji||'🏏'}</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">${prod.descripcion||''}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <div style="font-size:24px;font-weight:600;font-family:'DM Mono',monospace;color:var(--green);">${fmt$(discP)}</div>
+      ${IS_PRO ? `<div style="font-size:14px;text-decoration:line-through;color:var(--muted);">${fmt$(prod.precio)}</div><span class="pill pg">Pro −15%</span>` : ''}
+    </div>
+    ${!IS_PRO ? `<div style="background:var(--purple-l);border-radius:var(--rs);padding:10px;margin-bottom:14px;cursor:pointer;" onclick="document.getElementById('m-pro').classList.add('show')"><span style="color:var(--purple);font-size:12px;font-weight:600;">Activar Mito Pro</span> <span style="font-size:12px;color:var(--muted);">y pagás ${fmt$(Math.round(prod.precio*.85))} →</span></div>` : ''}
+    <button class="btn btng" onclick="comprar(${prod.precio})">Comprar · ${fmt$(discP)}</button>`;
+  document.getElementById('m-store').classList.add('show');
+}
+
+async function comprar(precio) {
+  try {
+    await supa.from('ordenes').insert({
+      jugador_id: MY_PLAYER?.id,
+      precio_pagado: IS_PRO ? Math.round(precio*.85) : precio,
+      descuento_pro: IS_PRO,
+      estado: 'confirmada'
+    });
+  } catch(e) {}
+  document.getElementById('m-store').classList.remove('show');
+  alert('✓ Compra confirmada · Envío en 24hs · Te contactamos por WhatsApp');
+}
+
+// ─── PRO ─────────────────────────────────────────────────────
+async function activatePro(plan) {
+  IS_PRO = true;
+  if (MY_PLAYER?.id) {
+    await supa.from('jugadores').update({ es_pro: true }).eq('id', MY_PLAYER.id);
+    await supa.from('suscripciones_pro').upsert({
+      jugador_id: MY_PLAYER.id,
+      plan,
+      precio_mensual: plan === 'anual' ? 3200 : 4500,
+      vencimiento: new Date(Date.now() + (plan==='anual'?365:30)*24*60*60*1000).toISOString(),
+      activa: true
+    }, { onConflict: 'jugador_id' });
+  }
+  document.getElementById('m-pro').classList.remove('show');
+  document.getElementById('home-pro-badge').innerHTML = '<span class="pro-pill">PRO</span>';
+  document.getElementById('pro-upsell-home').innerHTML = '';
+  renderProStatusCard();
+  alert(`✓ Mito Pro activado · Plan ${plan==='anual'?'anual ($3.200/mes)':'mensual ($4.500/mes)'}\n\n• 15% descuento en inscripciones\n• Perfil destacado en el ranking\n• Estadísticas avanzadas`);
+}
+
+// ─── CLUB ─────────────────────────────────────────────────────
+async function loadClub() {
+  try {
+    const { data: torneos } = await supa.from('torneos').select('*').order('created_at', { ascending: false }).limit(5);
+    document.getElementById('club-torneos-n').textContent = torneos?.length || 0;
+    document.getElementById('club-jugadores').textContent = ALL_PLAYERS.length;
+    document.getElementById('club-t').innerHTML = (torneos||[]).map(t => `
+      <div class="card" style="padding:12px 14px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:13px;font-weight:600;">${t.nombre}</div>
+          <span class="pill ${t.estado==='finalizado'?'pgr':'pg'}">${t.estado}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${t.fecha_inicio}</div>
+        <div class="prog"><div class="pfill" style="width:${Math.round((t.cupos_ocupados/t.cupos_max)*100)}%;"></div></div>
+        <div style="font-size:11px;color:var(--muted);">${t.cupos_ocupados}/${t.cupos_max} inscriptos</div>
+      </div>`).join('') || '<div class="empty">Todavía no publicaste torneos</div>';
+  } catch(e) {}
+}
+
+async function pubTorneo() {
+  const nom = document.getElementById('c-nom').value.trim();
+  const fec = document.getElementById('c-fec').value;
+  const rmin = parseInt(document.getElementById('c-rmin').value) || 1200;
+  const rmax = parseInt(document.getElementById('c-rmax').value) || 1600;
+  const cup = parseInt(document.getElementById('c-cup').value) || 24;
+  const pre = parseInt(document.getElementById('c-pre').value) || 10000;
+  const fmt = document.getElementById('c-fmt').value;
+  const spon = document.getElementById('c-spon').checked;
+  if (!nom || !fec) { showToast('toast-club', 'Completá nombre y fecha', 'w'); return; }
+  try {
+    const { error } = await supa.from('torneos').insert({
+      nombre: nom, zona: 'bsas',
+      fecha_inicio: fec, rating_min: rmin, rating_max: rmax,
+      cupos_max: cup, cupos_ocupados: 0, precio: pre,
+      formato: fmt, estado: 'abierto',
+      patrocinado: spon, sponsor_nombre: spon ? 'Mito' : null, sponsor_premio: spon ? 'Pala Mito' : null
+    });
+    if (error) throw error;
+    showToast('toast-club', `"${nom}" publicado. Ya es visible para jugadores compatibles.`);
+    setTimeout(() => loadClub(), 1000);
+  } catch(e) {
+    showToast('toast-club', 'Error al publicar. Intentá de nuevo.', 'e');
+  }
+}
+
+// ─── NOTIFICACIONES ───────────────────────────────────────────
+async function openNotifs() {
+  try {
+    const { data } = await supa.from('notificaciones').select('*')
+      .eq('jugador_id', MY_PLAYER?.id).order('created_at', { ascending: false }).limit(10);
+    document.getElementById('notifs-body').innerHTML = (data||[]).length > 0
+      ? (data||[]).map(n => `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr);">
+          <div style="width:8px;height:8px;border-radius:50%;background:${!n.leida?'var(--green)':'transparent'};border:1px solid ${!n.leida?'var(--green)':'var(--bdr)'};flex-shrink:0;margin-top:5px;"></div>
+          <div><div style="font-size:13px;font-weight:600;margin-bottom:2px;">${n.titulo}</div><div style="font-size:12px;color:var(--muted);">${n.cuerpo}</div></div>
+        </div>`).join('')
+      : '<div class="empty">No tenés notificaciones</div>';
+  } catch(e) {
+    document.getElementById('notifs-body').innerHTML = '<div class="empty">No tenés notificaciones</div>';
+  }
+  document.getElementById('m-notifs').classList.add('show');
+  document.getElementById('ndot').style.display = 'none';
+}
+
+// ─── SHARE & SPARKLINE ───────────────────────────────────────
+function shareRating() {
+  const r = document.getElementById('home-rating').textContent;
+  const msg = `Mi rating Mito es ${r} — jugá pádel con datos reales 🎾\nmitorating.netlify.app`;
+  if (navigator.share) navigator.share({ title: 'Mito Rating', text: msg }).catch(()=>{});
+  else alert('Compartí tu rating:\n\n' + msg);
+}
+
+function renderSparkline() {
+  setTimeout(() => {
+    const ctx = document.getElementById('home-spark');
+    if (!ctx || ctx._done) return; ctx._done = true;
+    new Chart(ctx.getContext('2d'), {
+      type: 'line',
+      data: { labels: Array(8).fill(''), datasets: [{ data: [1310,1325,1342,1355,1368,1380,1389,MY_RATING], borderColor: 'rgba(255,255,255,.7)', borderWidth: 1.5, pointRadius: 0, tension: .4, fill: false }] },
+      options: { responsive: false, animation: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+    });
+  }, 150);
+}
+
+// ─── CLOCK ───────────────────────────────────────────────────
+function tick() { const n = new Date(); document.getElementById('clock').textContent = n.getHours() + ':' + String(n.getMinutes()).padStart(2,'0'); }
+tick(); setInterval(tick, 30000);
+
+// ─── INIT ────────────────────────────────────────────────────
+(async () => {
+  await loadMyPlayer();
+  await loadAllPlayers();
+})();
+</script>
+</body>
+</html>
