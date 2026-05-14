@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mito Rating</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const SUPA_URL = 'https://zvgpdvjosjtkqqidykdf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z3Bkdmpvc2p0a3FxaWR5a2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTExODMsImV4cCI6MjA5NDEyNzE4M30.D6Q_z_NO_dPkD0uwiEINhpIi9AU9X-lqquMCULsp37k';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+const ADMIN_EMAILS = ['vranjican22@gmail.com','info@mitodeportes.com.ar'];
+</script>
+<style>
+:root{
+  --green:#1a6b4a;--green-l:#e8f5ee;--green-m:#2d9e6b;--green-d:#0d3d2a;--green-b:#a8dcc1;
+  --amber:#c97d1a;--amber-l:#fef3e2;--red:#c0392b;--red-l:#fdecea;
+  --purple:#5b4fcf;--purple-l:#edeafc;
+  --g50:#f8f7f4;--g100:#f0ede8;--g200:#ddd9d2;--g400:#9c9890;--g600:#5e5a54;--g900:#1a1916;
+  --bg:#f8f7f4;--surf:#fff;--bdr:#e8e4dd;--txt:#1a1916;--muted:#7a766e;
+  --r:14px;--rs:8px;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+
+/* ── VISTA ── */
+.view{display:none;}
+.view.active{display:flex;flex-direction:column;min-height:100vh;}
+
+/* ══════════════════════════════════════
+   LOGIN
+══════════════════════════════════════ */
+#view-login{align-items:center;justify-content:center;padding:20px;background:var(--bg);}
+.login-wrap{width:100%;max-width:400px;}
+.login-logo-area{text-align:center;margin-bottom:32px;}
+.login-logo{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:var(--green-d);border-radius:18px;font-size:28px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;margin-bottom:12px;}
+.login-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:0;}
+.login-tabs{display:flex;border-bottom:1px solid var(--bdr);}
+.ltab{flex:1;padding:14px;text-align:center;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.ltab.on{color:var(--green);border-bottom-color:var(--green);}
+.login-body{padding:24px;}
+.tipo-opt{padding:12px 8px;border:1px solid var(--bdr);border-radius:var(--rs);text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.tipo-opt.on{border-color:var(--green-m);background:var(--green-l);}
+.tipo-opt:hover{border-color:var(--green-b);}
+
+/* ══════════════════════════════════════
+   APP (JUGADOR)
+══════════════════════════════════════ */
+#view-app{background:var(--bg);}
+.app-shell{width:100%;max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+.app-status{display:flex;justify-content:space-between;padding:10px 20px 4px;font-size:11px;font-weight:500;color:var(--g600);flex-shrink:0;}
+.app-topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 12px;flex-shrink:0;}
+.app-logo{font-size:18px;font-weight:600;color:var(--green);letter-spacing:-.5px;}
+.app-page-ttl{font-size:17px;font-weight:600;letter-spacing:-.3px;display:none;}
+.ibtn{width:36px;height:36px;border-radius:50%;background:var(--surf);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--g600);position:relative;}
+.app-page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.app-page.active{display:flex;}
+.scroll{flex:1;overflow-y:auto;padding:0 16px 90px;-webkit-overflow-scrolling:touch;}
+.scroll::-webkit-scrollbar{display:none;}
+.navbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:var(--surf);border-top:1px solid var(--bdr);padding:6px 0 max(6px,env(safe-area-inset-bottom));z-index:100;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;border:none;background:none;font-size:10px;color:var(--g400);font-family:'DM Sans',sans-serif;transition:color .15s;}
+.nb.on{color:var(--green);}
+.nb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+/* ══════════════════════════════════════
+   ADMIN
+══════════════════════════════════════ */
+#view-admin{background:var(--g50);}
+.admin-layout{display:flex;min-height:100vh;}
+.admin-sidebar{width:var(--sidebar);background:var(--green-d);color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;height:100vh;z-index:100;overflow-y:auto;}
+.admin-sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.1);}
+.admin-logo-row{display:flex;align-items:center;gap:10px;}
+.admin-logo-sq{width:34px;height:34px;background:var(--green-m);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-family:'DM Mono',monospace;}
+.admin-nav{flex:1;padding:10px 8px;}
+.anav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.7);transition:background .15s;margin-bottom:2px;}
+.anav:hover{background:rgba(255,255,255,.08);color:#fff;}
+.anav.on{background:rgba(255,255,255,.15);color:#fff;}
+.anav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.anav-sec{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.8px;text-transform:uppercase;padding:10px 12px 4px;}
+.admin-main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+.admin-topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.admin-content{padding:24px;flex:1;}
+.admin-page{display:none;}
+.admin-page.active{display:block;}
+
+/* ══════════════════════════════════════
+   COMPONENTES COMPARTIDOS
+══════════════════════════════════════ */
+.pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;}
+.pg{background:var(--green-l);color:var(--green-d);}
+.pa{background:var(--amber-l);color:var(--amber);}
+.pr{background:var(--red-l);color:var(--red);}
+.pp{background:var(--purple-l);color:var(--purple);}
+.pgr{background:var(--g100);color:var(--g600);}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;font-family:'DM Mono',monospace;}
+.av-xl{width:56px;height:56px;font-size:18px;}
+.av-md{width:34px;height:34px;font-size:12px;}
+.av-sm{width:26px;height:26px;font-size:9px;}
+.avg{background:var(--green-l);color:var(--green-d);}
+.avp{background:var(--purple-l);color:var(--purple);}
+.ava{background:var(--amber-l);color:var(--amber);}
+.avr{background:var(--red-l);color:var(--red);}
+.avq{background:var(--g100);color:var(--g600);}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.hero{background:var(--green-d);border-radius:var(--r);padding:20px;margin-bottom:12px;color:#fff;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.05);border-radius:50%;}
+.rnum{font-size:50px;font-weight:300;line-height:1;font-family:'DM Mono',monospace;}
+.rdelta{font-size:12px;color:#6ee7a8;margin-top:4px;font-weight:500;}
+.stat2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+.sbox{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;}
+.sn{font-size:24px;font-weight:500;font-family:'DM Mono',monospace;}
+.sl{font-size:11px;color:var(--muted);margin-top:2px;}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--bdr);}
+.mrow:last-child{border-bottom:none;}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);padding:0 16px;margin:0 -16px 14px;overflow-x:auto;flex-shrink:0;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{font-size:13px;padding:10px 12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-weight:500;}
+.tab.on{color:var(--green);border-bottom-color:var(--green);}
+.rrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--bdr);}
+.rrow:last-child{border-bottom:none;}
+.rme{background:var(--green-l);margin:0 -16px;padding:11px 16px;}
+.tcard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.tcard.compat{border-color:var(--green-b);}
+.tcard.sponsored{border-color:var(--amber);}
+.prog{height:4px;background:var(--g100);border-radius:2px;margin:8px 0;}
+.pfill{height:4px;border-radius:2px;background:var(--green-m);}
+.flabel{font-size:12px;color:var(--muted);margin-bottom:5px;display:block;font-weight:500;}
+.fi{width:100%;padding:11px 14px;border:1px solid var(--bdr);border-radius:var(--rs);font-size:14px;background:var(--surf);color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;margin-bottom:14px;appearance:none;}
+.fi:focus{border-color:var(--green-m);}
+.btn{width:100%;padding:13px;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.btn:active{opacity:.85;}
+.btng{background:var(--green);color:#fff;margin-bottom:10px;}
+.btn-google{background:#fff;color:var(--g900);border:1px solid var(--bdr);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;}
+.toast{padding:12px 14px;border-radius:var(--rs);font-size:13px;font-weight:500;text-align:center;display:none;margin-bottom:14px;}
+.toast.show{display:block;}
+.tok{background:var(--green-l);color:var(--green-d);}
+.terr{background:var(--red-l);color:var(--red);}
+.tinfo{background:var(--purple-l);color:var(--purple);}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal{background:var(--surf);border-radius:var(--r) var(--r) 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));width:100%;max-width:430px;max-height:88vh;overflow-y:auto;animation:slideUp .25s ease;}
+.modal-center{border-radius:var(--r);max-width:480px;align-self:center;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.handle{width:36px;height:4px;background:var(--g200);border-radius:2px;margin:0 auto 20px;}
+.popt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:pointer;margin-bottom:8px;}
+.popt.sel{border-color:var(--green-m);background:var(--green-l);}
+.sep{height:1px;background:var(--bdr);margin:16px 0;}
+.sec{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:10px;}
+.ndot{width:8px;height:8px;background:#e74c3c;border-radius:50%;position:absolute;top:0;right:0;}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--muted);font-size:13px;}
+.spinner{width:22px;height:22px;border:2px solid var(--bdr);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
+/* ADMIN TABLES */
+.admin-card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:16px;}
+.admin-card-header{padding:16px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.admin-card-title{font-size:14px;font-weight:600;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.kpi{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:18px;}
+.kpi-label{font-size:12px;color:var(--g600);font-weight:500;margin-bottom:6px;}
+.kpi-val{font-size:30px;font-weight:300;font-family:'DM Mono',monospace;line-height:1;}
+.kpi-sub{font-size:12px;color:var(--g400);margin-top:4px;}
+.kpi-up{color:var(--green-m);}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-weight:600;color:var(--g600);padding:10px 14px;border-bottom:1px solid var(--bdr);letter-spacing:.3px;text-transform:uppercase;background:var(--g50);}
+td{padding:11px 14px;border-bottom:1px solid var(--bdr);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--g50);}
+.sbtn{padding:6px 12px;font-size:11px;font-weight:600;border-radius:20px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sbtn-g{background:var(--green);color:#fff;}
+.sbtn-r{background:var(--red-l);color:var(--red);}
+.sbtn-gr{background:var(--g100);color:var(--g600);border:1px solid var(--bdr);}
+.search-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.search-input{flex:1;padding:10px 14px;border:1px solid var(--bdr);border-radius:var(--rs);font-size:14px;background:#fff;outline:none;font-family:'DM Sans',sans-serif;}
+.search-input:focus{border-color:var(--green-m);}
+.rev-bar{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bdr);}
+.rev-bar:last-child{border-bottom:none;}
+.rev-bar-wrap{flex:2;height:6px;background:var(--g100);border-radius:3px;overflow:hidden;}
+.rev-bar-fill{height:6px;border-radius:3px;background:var(--green-m);}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.app-page.active .scroll>*{animation:fadeIn .2s ease;}
+@media(max-width:768px){.admin-sidebar{transform:translateX(-100%);transition:transform .25s;}.admin-sidebar.open{transform:translateX(0);}.admin-main{margin-left:0;}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     VISTA: LOGIN
+════════════════════════════════════ -->
+<div id="view-login" class="view active">
+  <div class="login-wrap">
+    <div class="login-logo-area">
+      <div class="login-logo">M</div>
+      <div style="font-size:24px;font-weight:600;color:var(--green-d);letter-spacing:-.5px;">Mito Rating</div>
+      <div style="font-size:13px;color:var(--g600);margin-top:4px;">El sistema de rating del pádel argentino</div>
+    </div>
+    <div class="login-card">
+      <div class="login-tabs">
+        <div class="ltab on" onclick="loginTab('login')">Ingresar</div>
+        <div class="ltab" onclick="loginTab('register')">Registrarse</div>
+      </div>
+      <div class="login-body">
+        <!-- LOGIN -->
+        <div id="lt-login">
+          <div id="toast-login" class="toast"></div>
+          <label class="flabel">Email</label>
+          <input class="fi" type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+          <label class="flabel">Contraseña</label>
+          <input class="fi" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+          <div style="text-align:right;margin:-8px 0 14px;"><span style="font-size:12px;color:var(--green);cursor:pointer;" onclick="forgotPass()">¿Olvidaste tu contraseña?</span></div>
+          <button class="btn btng" onclick="loginEmail()">Ingresar</button>
+          <div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--g400);font-size:12px;"><div style="flex:1;height:1px;background:var(--bdr);"></div>o ingresá con<div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+          <button class="btn btn-google" onclick="loginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+            Continuar con Google
+          </button>
+        </div>
+        <!-- REGISTER -->
+        <div id="lt-register" style="display:none;">
+          <div id="toast-reg" class="toast"></div>
+
+          <!-- TIPO DE USUARIO — selector principal -->
+          <label class="flabel">¿Cómo vas a usar Mito?</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;" id="tipo-selector">
+            <div class="tipo-opt on" data-tipo="jugador" onclick="setTipoReg('jugador')">
+              <div style="font-size:22px;margin-bottom:4px;">🎾</div>
+              <div style="font-size:12px;font-weight:600;">Jugador</div>
+              <div style="font-size:10px;color:var(--muted);">Quiero jugar torneos</div>
+            </div>
+            <div class="tipo-opt" data-tipo="club" onclick="setTipoReg('club')">
+              <div style="font-size:22px;margin-bottom:4px;">🏟️</div>
+              <div style="font-size:12px;font-weight:600;">Club</div>
+              <div style="font-size:10px;color:var(--muted);">Tengo canchas</div>
+            </div>
+            <div class="tipo-opt" data-tipo="organizador" onclick="setTipoReg('organizador')">
+              <div style="font-size:22px;margin-bottom:4px;">📋</div>
+              <div style="font-size:12px;font-weight:600;">Organizador</div>
+              <div style="font-size:10px;color:var(--muted);">Organizo torneos</div>
+            </div>
+          </div>
+
+          <label class="flabel" id="r-nombre-label">Nombre completo</label>
+          <input class="fi" type="text" id="r-nombre" placeholder="Juan Pérez">
+          <label class="flabel">Email</label>
+          <input class="fi" type="email" id="r-email" placeholder="tu@email.com">
+          <label class="flabel">Contraseña</label>
+          <input class="fi" type="password" id="r-pass" placeholder="Mínimo 6 caracteres">
+
+          <!-- Campos solo para JUGADORES -->
+          <div id="reg-campos-jugador">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div><label class="flabel">Rol en cancha</label><select class="fi" id="r-rol" style="margin-bottom:0;"><option value="derecha">Derecha</option><option value="reves">Revés</option></select></div>
+              <div><label class="flabel">Provincia</label><select class="fi" id="r-provincia" style="margin-bottom:0;" onchange="setProvinciaReg(this.value)">
+                <option value="">Seleccionar...</option>
+                <option>Buenos Aires (CABA)</option><option>Buenos Aires (Provincia)</option>
+                <option>Catamarca</option><option>Chaco</option><option>Chubut</option>
+                <option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option>
+                <option>Formosa</option><option>Jujuy</option><option>La Pampa</option>
+                <option>La Rioja</option><option>Mendoza</option><option>Misiones</option>
+                <option>Neuquén</option><option>Río Negro</option><option>Salta</option>
+                <option>San Juan</option><option>San Luis</option><option>Santa Cruz</option>
+                <option>Santa Fe</option><option>Santiago del Estero</option>
+                <option>Tierra del Fuego</option><option>Tucumán</option>
+              </select></div>
+            </div>
+            <div style="height:10px;"></div>
+            <label class="flabel">Ciudad / Localidad</label>
+            <select class="fi" id="r-ciudad"><option value="">Primero elegí la provincia</option></select>
+          </div>
+
+          <!-- Campos solo para CLUB / ORGANIZADOR -->
+          <div id="reg-campos-club" style="display:none;">
+            <label class="flabel">Nombre del club / organización</label>
+            <input class="fi" type="text" id="r-club-nombre" placeholder="Club Náutico San Lorenzo">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div><label class="flabel">Provincia</label><select class="fi" id="r-provincia-club" style="margin-bottom:0;" onchange="setProvinciaReg2(this.value)">
+                <option value="">Seleccionar...</option>
+                <option>Buenos Aires (CABA)</option><option>Buenos Aires (Provincia)</option>
+                <option>Catamarca</option><option>Chaco</option><option>Chubut</option>
+                <option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option>
+                <option>Formosa</option><option>Jujuy</option><option>La Pampa</option>
+                <option>La Rioja</option><option>Mendoza</option><option>Misiones</option>
+                <option>Neuquén</option><option>Río Negro</option><option>Salta</option>
+                <option>San Juan</option><option>San Luis</option><option>Santa Cruz</option>
+                <option>Santa Fe</option><option>Santiago del Estero</option>
+                <option>Tierra del Fuego</option><option>Tucumán</option>
+              </select></div>
+              <div><label class="flabel">Ciudad</label><select class="fi" id="r-ciudad-club" style="margin-bottom:0;"><option value="">Primero elegí provincia</option></select></div>
+            </div>
+            <div style="height:10px;"></div>
+            <label class="flabel">Teléfono de contacto</label>
+            <input class="fi" type="tel" id="r-telefono" placeholder="011 1234 5678">
+          </div>
+
+          <div style="height:4px;"></div>
+          <button class="btn btng" onclick="registerEmail()">Crear cuenta</button>
+          <div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--g400);font-size:12px;"><div style="flex:1;height:1px;background:var(--bdr);"></div>o registrate con<div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+          <button class="btn btn-google" onclick="loginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+            Continuar con Google
+          </button>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--g400);">Al continuar aceptás los <span style="color:var(--green);cursor:pointer;">Términos de uso</span> de Mito Rating</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     VISTA: APP (JUGADOR)
+════════════════════════════════════ -->
+<div id="view-app" class="view">
+<div class="app-shell">
+  <div class="app-status"><span id="app-clock">9:41</span><span>●●●●●</span></div>
+  <div class="app-topbar">
+    <div class="app-logo" id="app-logo">Mito</div>
+    <div class="app-page-ttl" id="app-ttl"></div>
+    <div style="display:flex;gap:8px;">
+      <div class="ibtn" onclick="openNotifs()">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="ndot" id="ndot"></div>
+      </div>
+      <div class="ibtn" onclick="logout()" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="app-home" class="app-page active">
+    <div class="scroll">
+      <div id="home-loading" class="loading"><div class="spinner"></div><span>Cargando...</span></div>
+      <div id="home-content" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div class="av av-xl avg" id="home-av">MA</div>
+          <div>
+            <div style="font-size:17px;font-weight:600;letter-spacing:-.3px;" id="home-nombre">—</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;" id="home-club">Buenos Aires</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <span class="pill pg">✓ Verificado</span>
+              <span class="pill pa" id="home-rol">Derecha</span>
+              <span class="pill pgr" id="home-pos">#— BsAs</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero">
+          <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Rating Mito</div>
+          <div class="rnum" id="home-rating">—</div>
+          <div class="rdelta" id="home-delta">↑ cargando...</div>
+          <canvas id="home-spark" width="180" height="36" style="position:absolute;bottom:16px;right:16px;opacity:.45;"></canvas>
+        </div>
+        <div class="stat2">
+          <div class="sbox"><div class="sn" id="h-pj">—</div><div class="sl">partidos jugados</div></div>
+          <div class="sbox"><div class="sn" id="h-wr">—</div><div class="sl">win rate</div></div>
+          <div class="sbox"><div class="sn" id="h-racha">—</div><div class="sl">mejor racha</div></div>
+          <div class="sbox"><div class="sn">3</div><div class="sl">torneos Mito</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="sec" style="margin-bottom:0;">Torneos compatibles</div>
+          <span style="font-size:12px;color:var(--green);cursor:pointer;font-weight:500;" onclick="appGoTo('torneos',document.querySelectorAll('.nb')[1])">Ver todos →</span>
+        </div>
+        <div id="home-torneos"><div class="loading"><div class="spinner"></div></div></div>
+        <div class="sep"></div>
+        <div class="sec">Últimos partidos</div>
+        <div id="home-matches"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TORNEOS -->
+  <div id="app-torneos" class="app-page">
+    <div style="padding:0 16px;flex-shrink:0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <select class="fi" id="fil-z" onchange="loadTorneos()" style="margin-bottom:0;"><option value="">Todas las zonas</option><option value="bsas" selected>Buenos Aires</option><option value="cordoba">Córdoba</option><option value="rosario">Rosario</option></select>
+        <select class="fi" id="fil-n" onchange="loadTorneos()" style="margin-bottom:0;"><option value="compat">Compatible</option><option value="todos">Todos</option></select>
+      </div>
+      <div class="tabs" style="margin-bottom:0;"><div class="tab on" onclick="switchTTab(this,'tt-p')">Próximos</div><div class="tab" onclick="switchTTab(this,'tt-m')">Mis inscripciones</div></div>
+    </div>
+    <div class="scroll" style="padding-top:12px;">
+      <div id="tt-p"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="tt-m" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- CARGAR PARTIDO -->
+  <div id="app-cargar" class="app-page">
+    <div class="scroll">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:18px;">Registrá el resultado · los 4 jugadores recibirán notificación</div>
+      <label class="flabel">Tu pareja</label>
+      <select class="fi" id="sel-s" onchange="calcPreview()"><option value="">Seleccionar...</option></select>
+      <label class="flabel">Rival 1 (derecha)</label>
+      <select class="fi" id="sel-r1" onchange="calcPreview()"><option value="">Seleccionar...</option></select>
+      <label class="flabel">Rival 2 (revés)</label>
+      <select class="fi" id="sel-r2" onchange="calcPreview()"><option value="">Seleccionar...</option></select>
+      <label class="flabel">Set 1</label>
+      <div style="display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;margin-bottom:8px;">
+        <input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Nos" id="s1a" oninput="calcPreview()">
+        <div style="text-align:center;color:var(--muted);font-size:16px;">–</div>
+        <input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Ellos" id="s1b" oninput="calcPreview()">
+      </div>
+      <label class="flabel" style="margin-top:8px;">Set 2</label>
+      <div style="display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:center;margin-bottom:10px;">
+        <input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Nos" id="s2a" oninput="calcPreview()">
+        <div style="text-align:center;color:var(--muted);font-size:16px;">–</div>
+        <input class="fi" style="margin-bottom:0;text-align:center;font-family:'DM Mono',monospace;font-size:18px;" type="number" min="0" max="7" placeholder="Ellos" id="s2b" oninput="calcPreview()">
+      </div>
+      <div id="prev-box" style="background:var(--g50);border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;display:none;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;">Impacto estimado</div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;">Tu rating</span><span style="font-size:16px;font-weight:600;font-family:'DM Mono',monospace;" id="prev-v">—</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;"><span style="font-size:13px;color:var(--muted);">Prob. esperada</span><span style="font-size:13px;font-family:'DM Mono',monospace;" id="prev-p">—</span></div>
+      </div>
+      <div id="toast-c" class="toast"></div>
+      <button class="btn btng" onclick="registrarPartido()">Registrar partido</button>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <div id="app-ranking" class="app-page">
+    <div style="padding:0 16px;flex-shrink:0;">
+      <div class="tabs" style="margin-bottom:0;">
+        <div class="tab on" onclick="switchRkTab(this,'rk-b')">Buenos Aires</div>
+        <div class="tab" onclick="switchRkTab(this,'rk-a')">Argentina</div>
+        <div class="tab" onclick="switchRkTab(this,'rk-c')">Mi club</div>
+      </div>
+    </div>
+    <div class="scroll" style="padding-top:10px;">
+      <div id="rk-b"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="rk-a" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="rk-c" style="display:none;"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div id="app-perfil" class="app-page">
+    <div class="scroll">
+      <div style="background:var(--green-d);border-radius:var(--r);padding:20px;margin-bottom:12px;color:#fff;text-align:center;">
+        <div style="font-size:11px;opacity:.6;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;">Mito Rating</div>
+        <div style="font-size:48px;font-weight:300;font-family:'DM Mono',monospace;letter-spacing:-1px;" id="p-r-big">—</div>
+        <div style="font-size:13px;opacity:.7;margin-bottom:14px;" id="p-name">—</div>
+        <button style="background:var(--green-l);color:var(--green-d);border:none;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;" onclick="shareRating()">Compartir en WhatsApp</button>
+      </div>
+      <div class="sec">Tienda Mito</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;" id="productos-list">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="sep"></div>
+      <div class="card">
+        <div class="sec" style="margin-bottom:12px;">Evolución del rating</div>
+        <canvas id="evo-chart" height="80"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);"><span>3 meses atrás</span><span>Hoy</span></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="navbar">
+    <button class="nb on" onclick="appGoTo('home',this)" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Inicio</button>
+    <button class="nb" onclick="appGoTo('torneos',this)" aria-label="Torneos"><svg viewBox="0 0 24 24"><path d="M8 21h8m-4-4v4M5 3h14l-1 7a7 7 0 0 1-12 0z"/></svg>Torneos</button>
+    <button class="nb" onclick="appGoTo('cargar',this)" aria-label="Partido"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Partido</button>
+    <button class="nb" onclick="appGoTo('ranking',this)" aria-label="Ranking"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Ranking</button>
+    <button class="nb" onclick="appGoTo('perfil',this)" aria-label="Perfil"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Perfil</button>
+  </nav>
+</div>
+</div>
+
+<!-- ════════════════════════════════════
+     VISTA: ADMIN
+════════════════════════════════════ -->
+<div id="view-admin" class="view">
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-logo">
+      <div class="admin-logo-row">
+        <div class="admin-logo-sq">M</div>
+        <div><div style="font-size:15px;font-weight:600;">Mito Rating</div><div style="font-size:10px;opacity:.6;">Panel de administración</div></div>
+      </div>
+    </div>
+    <nav class="admin-nav">
+      <div class="anav-sec">Principal</div>
+      <div class="anav on" onclick="adminGoTo('dashboard',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+      <div class="anav" onclick="adminGoTo('jugadores',this)"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Jugadores</div>
+      <div class="anav" onclick="adminGoTo('torneos',this)"><svg viewBox="0 0 24 24"><path d="M8 21h8m-4-4v4M5 3h14l-1 7a7 7 0 0 1-12 0z"/></svg>Torneos</div>
+      <div class="anav" onclick="adminGoTo('partidos',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Partidos</div>
+      <div class="anav-sec">Negocio</div>
+      <div class="anav" onclick="adminGoTo('ingresos',this)"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 1 0 0 7h5a3.5 3.5 0 1 1 0 7H6"/></svg>Ingresos</div>
+      <div class="anav" onclick="adminGoTo('clubes',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Clubes</div>
+    </nav>
+    <div style="padding:10px 8px;border-top:1px solid rgba(255,255,255,.1);">
+      <div class="anav" onclick="logout()" style="color:rgba(255,100,100,.8);"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</div>
+    </div>
+  </aside>
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div style="font-size:17px;font-weight:600;letter-spacing:-.3px;" id="admin-page-title">Dashboard</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-size:13px;color:var(--g600);" id="admin-email-label">admin</div>
+        <div class="av av-md avg" id="admin-av">AD</div>
+      </div>
+    </div>
+    <div class="admin-content">
+      <div id="adm-dashboard" class="admin-page active">
+        <div class="kpi-grid" id="kpi-grid"><div class="loading"><div class="spinner"></div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Ingresos por fuente</div></div><div style="padding:16px;" id="rev-sources"></div></div>
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Top 5 ratings</div></div><div style="padding:16px;" id="top5"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Crecimiento de jugadores</div></div><div style="padding:16px;"><canvas id="chart-crecimiento" height="120"></canvas></div></div>
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Jugadores por provincia</div></div><div style="padding:16px;" id="mapa-prov"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;">
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Actividad reciente</div></div><div id="actividad"><div class="loading"><div class="spinner"></div></div></div></div>
+          <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Proyección de ingresos</div></div><div style="padding:16px;" id="proyeccion"></div></div>
+        </div>
+      </div>
+      <div id="adm-jugadores" class="admin-page">
+        <div class="search-bar"><input class="search-input" type="text" placeholder="Buscar jugador..." id="search-j" oninput="filterJ()"><button class="sbtn sbtn-gr" onclick="exportJugadoresCSV()">Exportar CSV</button><button class="sbtn sbtn-g" onclick="openNewJ()">+ Nuevo</button></div>
+        <div class="admin-card"><table><thead><tr><th>Jugador</th><th>Rating</th><th>Rol</th><th>Ciudad</th><th>Partidos</th><th>Estado</th><th></th></tr></thead><tbody id="tabla-j"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+      <div id="adm-torneos" class="admin-page">
+        <div class="search-bar"><input class="search-input" type="text" placeholder="Buscar torneo..." id="search-t" oninput="filterT()"><button class="sbtn sbtn-g" onclick="openNewT()">+ Nuevo torneo</button></div>
+        <div class="admin-card"><table><thead><tr><th>Torneo</th><th>Fecha</th><th>Rating</th><th>Inscriptos</th><th>Precio</th><th>Estado</th><th></th></tr></thead><tbody id="tabla-t"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+      <div id="adm-partidos" class="admin-page">
+        <div class="admin-card"><table><thead><tr><th>Fecha</th><th>Pareja A</th><th>Pareja B</th><th>Resultado</th><th>Estado</th><th></th></tr></thead><tbody id="tabla-p"><tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+      <div id="adm-ingresos" class="admin-page">
+        <div class="kpi-grid" id="kpi-ing"></div>
+        <div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Inscripciones recientes</div></div><table><thead><tr><th>Torneo</th><th>Jugador</th><th>Precio</th><th>Fee Mito</th><th>Fecha</th></tr></thead><tbody id="tabla-ing"><tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+      <div id="adm-clubes" class="admin-page">
+        <div class="search-bar"><input class="search-input" type="text" placeholder="Buscar club..."><button class="sbtn sbtn-g" onclick="openNewClub()">+ Nuevo club</button></div>
+        <div class="admin-card"><table><thead><tr><th>Club</th><th>Ciudad</th><th>Zona</th><th>Jugadores</th><th>Torneos</th><th>Plan</th><th></th></tr></thead><tbody id="tabla-cl"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- MODALES -->
+<div class="modal-ov" id="m-insc"><div class="modal"><div class="handle"></div><div id="m-insc-body"></div></div></div>
+<div class="modal-ov" id="m-pro">
+  <div class="modal">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div><div style="font-size:18px;font-weight:600;color:var(--purple);">Mito Pro</div><div style="font-size:12px;color:var(--muted);">Desbloqueá todo el potencial</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-pro').classList.remove('show')">✕</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>15% descuento en todas las inscripciones</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>Perfil destacado en el ranking</div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>Estadísticas avanzadas de juego</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="padding:12px;border:1px solid var(--bdr);border-radius:var(--rs);text-align:center;cursor:pointer;" onclick="activatePro('mensual')"><div style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;">$4.500</div><div style="font-size:11px;color:var(--muted);">por mes</div></div>
+      <div style="padding:12px;border:2px solid var(--purple);border-radius:var(--rs);text-align:center;background:var(--purple-l);cursor:pointer;" onclick="activatePro('anual')"><div style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:var(--purple);">$3.200</div><div style="font-size:11px;color:var(--purple);">por mes · anual ★</div></div>
+    </div>
+    <button class="btn" style="background:var(--purple);color:#fff;" onclick="activatePro('mensual')">Activar Mito Pro</button>
+  </div>
+</div>
+<div class="modal-ov" id="m-notifs"><div class="modal"><div class="handle"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-size:16px;font-weight:600;">Notificaciones</div><div class="ibtn" onclick="document.getElementById('m-notifs').classList.remove('show')">✕</div></div><div id="notifs-body"></div></div></div>
+
+<!-- MODAL NUEVO CLUB -->
+<div class="modal-ov" id="m-nuevo-club">
+  <div class="modal modal-center" style="max-width:440px;align-self:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-size:17px;font-weight:600;">Nuevo club</div>
+      <div class="ibtn" onclick="document.getElementById('m-nuevo-club').classList.remove('show')">✕</div>
+    </div>
+    <label class="flabel">Nombre del club *</label>
+    <input class="fi" type="text" id="nc-nombre" placeholder="Club Náutico">
+    <label class="flabel">Ciudad *</label>
+    <input class="fi" type="text" id="nc-ciudad" placeholder="Buenos Aires">
+    <label class="flabel">Zona</label>
+    <select class="fi" id="nc-zona">
+      <option value="bsas">Buenos Aires</option>
+      <option value="cordoba">Córdoba</option>
+      <option value="rosario">Rosario</option>
+      <option value="mendoza">Mendoza</option>
+      <option value="otro">Otro</option>
+    </select>
+    <label class="flabel">Dirección</label>
+    <input class="fi" type="text" id="nc-direccion" placeholder="Av. Costanera Norte 1000">
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btng" style="flex:1;" onclick="saveClub()">Guardar club</button>
+      <button class="btn" style="flex:1;background:var(--g100);color:var(--txt);" onclick="document.getElementById('m-nuevo-club').classList.remove('show')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-ov" id="m-ver-jugador">
+  <div class="modal modal-center" style="max-width:600px;align-self:center;max-height:85vh;overflow-y:auto;">
+    <div id="ver-j-body"></div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO TORNEO -->
+<div class="modal-ov" id="m-nuevo-torneo">
+  <div class="modal modal-center" style="max-width:500px;align-self:center;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-size:17px;font-weight:600;">Nuevo torneo</div>
+      <div class="ibtn" onclick="document.getElementById('m-nuevo-torneo').classList.remove('show')">✕</div>
+    </div>
+    <label class="flabel">Nombre del torneo *</label>
+    <input class="fi" type="text" id="nt-nombre" placeholder="Open Náutico — Junio">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label class="flabel">Fecha inicio *</label><input class="fi" type="date" id="nt-fecha" style="margin-bottom:0;"></div>
+      <div><label class="flabel">Horario</label><input class="fi" type="text" id="nt-horario" placeholder="9:00hs" style="margin-bottom:0;"></div>
+    </div>
+    <div style="height:12px;"></div>
+    <label class="flabel">Dirección</label>
+    <input class="fi" type="text" id="nt-direccion" placeholder="Av. Costanera Norte 1000">
+    <label class="flabel">Descripción</label>
+    <input class="fi" type="text" id="nt-descripcion" placeholder="Torneo de 4ta categoría · Round Robin + finales">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label class="flabel">Rating mín.</label><input class="fi" type="number" id="nt-rmin" value="0" style="margin-bottom:0;"></div>
+      <div><label class="flabel">Rating máx.</label><input class="fi" type="number" id="nt-rmax" value="9999" style="margin-bottom:0;"></div>
+    </div>
+    <div style="height:12px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label class="flabel">Cupos (parejas)</label><input class="fi" type="number" id="nt-cupos" value="24" style="margin-bottom:0;"></div>
+      <div><label class="flabel">Precio ($)</label><input class="fi" type="number" id="nt-precio" value="10000" style="margin-bottom:0;"></div>
+    </div>
+    <div style="height:12px;"></div>
+    <label class="flabel">Formato</label>
+    <select class="fi" id="nt-fmt"><option>Round Robin + finales</option><option>Eliminación directa</option><option>Grupos + playoffs</option><option>Masters</option></select>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px;background:var(--amber-l);border-radius:var(--rs);margin-bottom:14px;">
+      <input type="checkbox" id="nt-spon" style="width:16px;height:16px;accent-color:var(--amber);">
+      <div><div style="font-size:13px;font-weight:600;color:var(--amber);">Activar sponsorship Mito</div><div style="font-size:11px;color:var(--muted);">Torneo destacado · premios Mito · $0 costo</div></div>
+    </label>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btng" style="flex:1;" onclick="saveTorneo()">Publicar torneo</button>
+      <button class="btn" style="flex:1;background:var(--g100);color:var(--txt);" onclick="document.getElementById('m-nuevo-torneo').classList.remove('show')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-ov" id="modal-new-j">
+  <div class="modal modal-center" style="max-width:440px;align-self:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <div style="font-size:17px;font-weight:600;" id="modal-new-j-title">Nuevo jugador</div>
+      <div class="ibtn" onclick="document.getElementById('modal-new-j').classList.remove('show')">✕</div>
+    </div>
+    <label class="flabel">Nombre completo *</label>
+    <input class="fi" type="text" id="nj-nombre" placeholder="Juan Pérez">
+    <label class="flabel">Email *</label>
+    <input class="fi" type="email" id="nj-email" placeholder="juan@email.com">
+    <label class="flabel">Rating</label>
+    <input class="fi" type="number" id="nj-rating" value="1200">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label class="flabel">Rol</label><select class="fi" id="nj-rol" style="margin-bottom:0;"><option value="derecha">Derecha</option><option value="reves">Revés</option></select></div>
+      <div><label class="flabel">Provincia</label><select class="fi" id="nj-provincia" style="margin-bottom:0;" onchange="setProvincia(this.value)">
+        <option value="">Seleccionar...</option>
+        <option>Buenos Aires (CABA)</option><option>Buenos Aires (Provincia)</option>
+        <option>Catamarca</option><option>Chaco</option><option>Chubut</option>
+        <option>Córdoba</option><option>Corrientes</option><option>Entre Ríos</option>
+        <option>Formosa</option><option>Jujuy</option><option>La Pampa</option>
+        <option>La Rioja</option><option>Mendoza</option><option>Misiones</option>
+        <option>Neuquén</option><option>Río Negro</option><option>Salta</option>
+        <option>San Juan</option><option>San Luis</option><option>Santa Cruz</option>
+        <option>Santa Fe</option><option>Santiago del Estero</option>
+        <option>Tierra del Fuego</option><option>Tucumán</option>
+      </select></div>
+    </div>
+    <div style="height:10px;"></div>
+    <label class="flabel">Ciudad / Localidad</label>
+    <select class="fi" id="nj-ciudad"><option value="">Primero elegí la provincia</option></select>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btng" style="flex:1;" onclick="saveNewJ()">Guardar</button>
+      <button class="btn" style="flex:1;background:var(--g100);color:var(--txt);" onclick="document.getElementById('modal-new-j').classList.remove('show')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PROVINCIAS Y LOCALIDADES ──────────────────────────────────
+const PROV_CIUDADES = {
+  'Buenos Aires (CABA)': ['Buenos Aires (Ciudad Autónoma)'],
+  'Buenos Aires (Provincia)': ['Adolfo Alsina','Adolfo Gonzales Chaves','Alberti','Almirante Brown','Arrecifes','Avellaneda','Ayacucho','Azul','Bahía Blanca','Balcarce','Baradero','Benito Juárez','Berazategui','Berisso','Bolívar','Bragado','Brandsen','Campana','Cañuelas','Capitán Sarmiento','Carlos Casares','Carlos Tejedor','Carmen de Areco','Castelli','Chacabuco','Chascomús','Chivilcoy','Colón','Coronel Dorrego','Coronel Pringles','Coronel Rosales','Coronel Suárez','Daireaux','Dolores','Ensenada','Escobar','Esteban Echeverría','Exaltación de la Cruz','Ezeiza','Florencio Varela','Florentino Ameghino','General Alvarado','General Alvear','General Arenales','General Belgrano','General Guido','General Juan Madariaga','General La Madrid','General Las Heras','General Lavalle','General Paz','General Pinto','General Pueyrredón (Mar del Plata)','General Rodríguez','General San Martín','General Viamonte','General Villegas','Guaminí','Hipólito Yrigoyen','Hurlingham','Ituzaingó','José C. Paz','Junín','La Costa','La Matanza','La Plata','Lanús','Laprida','Las Flores','Leandro N. Alem','Lincoln','Lobería','Lobos','Lomas de Zamora','Luján','Magdalena','Maipú','Malvinas Argentinas','Mar Chiquita','Marcos Paz','Mercedes','Merlo','Monte','Monte Hermoso','Moreno','Morón','Navarro','Necochea','Olavarría','Patagones','Pehuajó','Pellegrini','Pergamino','Pila','Pilar','Pinamar','Presidente Perón','Puán','Punta Indio','Quilmes','Ramallo','Rauch','Rivadavia','Rojas','Roque Pérez','Saavedra','Saladillo','Salliqueló','Salto','San Andrés de Giles','San Antonio de Areco','San Cayetano','San Fernando','San Isidro','San Miguel','San Nicolás de los Arroyos','San Pedro','San Vicente','Suipacha','Tandil','Tapalqué','Tigre','Tordillo','Tornquist','Trenque Lauquen','Tres Arroyos','Tres de Febrero','Tres Lomas','Vicente López','Villarino','Zárate'],
+  'Catamarca': ['San Fernando del Valle de Catamarca','Santa Rosa','Tinogasta','Belén','Andalgalá','Fiambalá','Recreo','La Paz'],
+  'Chaco': ['Resistencia','Barranqueras','Presidencia Roque Sáenz Peña','Villa Ángela','Charata','General San Martín','Juan José Castelli','Quitilipi','Machagai','Las Breñas'],
+  'Chubut': ['Rawson','Trelew','Comodoro Rivadavia','Esquel','Puerto Madryn','Rada Tilly','Sarmiento','Puerto Pirámides','El Calafate (Chubut)','Río Mayo'],
+  'Córdoba': ['Córdoba','Río Cuarto','Villa María','San Francisco','Bell Ville','Villa Carlos Paz','Alta Gracia','Jesús María','Cosquín','La Falda','Marcos Juárez','Río Tercero','Villa Dolores','San Luis (Córdoba)','Laboulaye','Morteros','Villa Nueva','Oncativo','Monte Buey','Hernando','Oliva','Las Varillas','Arroyito','La Carlota','Cruz del Eje','Deán Funes','Laguna Larga','Unquillo','Mendiolaza'],
+  'Corrientes': ['Corrientes','Goya','Curuzú Cuatiá','Mercedes','Paso de los Libres','Santo Tomé','Esquina','Bella Vista','Alvear','Monte Caseros'],
+  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Concepción del Uruguay','Colón','Villaguay','Chajarí','Victoria','Federal','La Paz','Nogoyá','Diamante'],
+  'Formosa': ['Formosa','Clorinda','Pirané','Ingeniero Juárez','General Lucio Victorio Mansilla'],
+  'Jujuy': ['San Salvador de Jujuy','Palpalá','La Quiaca','Libertador General San Martín','Humahuaca','Tilcara','Perico','San Pedro de Jujuy'],
+  'La Pampa': ['Santa Rosa','General Pico','Toay','Realicó','General Acha','Victorica','Eduardo Castex','Macachín'],
+  'La Rioja': ['La Rioja','Chilecito','Aimogasta','Chamical','Chepes','Villa Unión'],
+  'Mendoza': ['Mendoza','San Rafael','Godoy Cruz','Maipú','Luján de Cuyo','Las Heras','Guaymallén','Rivadavia','San Martín','Junín','Tupungato','Tunuyán','Malargüe','General Alvear','La Paz','Lavalle'],
+  'Misiones': ['Posadas','Oberá','Eldorado','Puerto Iguazú','Apóstoles','Leandro N. Alem','Aristóbulo del Valle','Jardín América','San Vicente','Montecarlo','Bernardo de Irigoyen'],
+  'Neuquén': ['Neuquén','Cutral Có','Zapala','San Martín de los Andes','Villa La Angostura','Junín de los Andes','Centenario','Plaza Huincul','Chos Malal','Rincón de los Sauces'],
+  'Río Negro': ['Bariloche','General Roca','Cipolletti','Allen','Viedma','El Bolsón','Catriel','Cinco Saltos','Villa Regina','Ingeniero Jacobacci'],
+  'Salta': ['Salta','Tartagal','Orán','General Güemes','Rosario de la Frontera','Metán','Cafayate','Mosconi','Embarcación'],
+  'San Juan': ['San Juan','Rivadavia','Chimbas','Caucete','Santa Lucía','Rawson','Pocito','9 de Julio','Albardón','Ullum','Angaco'],
+  'San Luis': ['San Luis','Villa Mercedes','Merlo','Quines','Justo Daract','Concarán','La Toma'],
+  'Santa Cruz': ['Río Gallegos','Caleta Olivia','Pico Truncado','El Calafate','Puerto Madryn (SC)','Las Heras','Perito Moreno','Gobernador Gregores'],
+  'Santa Fe': ['Rosario','Santa Fe','Rafaela','Venado Tuerto','Reconquista','Santo Tomé','Esperanza','San Lorenzo','Villa Constitución','Cañada de Gómez','Rufino','Casilda','Firmat','Las Rosas','Vera','Tostado','Villa Gobernador Gálvez','Alcorta','Melincué','Wheelwright','Bombal','Murphy','Christophersen','Hughes','Elortondo','Sancti Spiritu','Carreras','Rufino','Casilda','Arroyo Seco','Armstrong','Chabás','Totoras','Sunchales','Brinkmann','San Justo','Gálvez','Coronda','San Javier','Romang','Avellaneda'],
+  'Santiago del Estero': ['Santiago del Estero','La Banda','Termas de Río Hondo','Añatuya','Frías','Loreto','Villa Atamisqui','Quimilí','Suncho Corral'],
+  'Tierra del Fuego': ['Ushuaia','Río Grande','Tolhuin'],
+  'Tucumán': ['San Miguel de Tucumán','Tafí Viejo','Banda del Río Salí','Yerba Buena','Concepción','Aguilares','Famaillá','Monteros','Alberdi'],
+};
+
+function setProvincia(prov, ciudadActual='') {
+  const sel = document.getElementById('nj-ciudad');
+  if (!sel) return;
+  const ciudades = PROV_CIUDADES[prov] || [];
+  sel.innerHTML = ciudades.length
+    ? ciudades.map(c=>`<option value="${c}"${c===ciudadActual?' selected':''}>${c}</option>`).join('')
+    : '<option value="">Seleccionar provincia primero</option>';
+}
+
+// También para el registro de usuario
+function setProvinciaReg(prov) {
+  const sel = document.getElementById('r-ciudad');
+  if (!sel) return;
+  const ciudades = PROV_CIUDADES[prov] || [];
+  sel.innerHTML = ciudades.length
+    ? ciudades.map(c=>`<option value="${c}">${c}</option>`).join('')
+    : '<option value="">Elegí la provincia primero</option>';
+}
+let MY_PLAYER = null, MY_RATING = 1200, IS_PRO = false;
+let ALL_PLAYERS = [], ALL_J_ADMIN = [], ALL_T_ADMIN = [];
+let currentT = null, selPartner = null, inscMode = 'pareja';
+
+const fmt$ = n => '$' + Math.round(n||0).toLocaleString('es-AR');
+const fmtDate = d => d ? new Date(d).toLocaleDateString('es-AR') : '—';
+const initials = n => (n||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+const avColor = i => ['avg','avp','ava','avr','avq'][i%5];
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+}
+
+function showToastEl(id, msg, type='ok') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `toast show t${type}`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════
+let TIPO_REGISTRO = 'jugador';
+
+function setTipoReg(tipo) {
+  TIPO_REGISTRO = tipo;
+  document.querySelectorAll('.tipo-opt').forEach(el => {
+    el.classList.toggle('on', el.dataset.tipo === tipo);
+  });
+  const esJugador = tipo === 'jugador';
+  document.getElementById('reg-campos-jugador').style.display = esJugador ? 'block' : 'none';
+  document.getElementById('reg-campos-club').style.display = esJugador ? 'none' : 'block';
+  document.getElementById('r-nombre-label').textContent = esJugador ? 'Nombre completo' : 'Tu nombre / responsable';
+  document.getElementById('r-nombre').placeholder = esJugador ? 'Juan Pérez' : 'Nombre del responsable';
+}
+
+function setProvinciaReg2(prov) {
+  const sel = document.getElementById('r-ciudad-club');
+  if (!sel) return;
+  const ciudades = PROV_CIUDADES[prov] || [];
+  sel.innerHTML = ciudades.length
+    ? ciudades.map(c=>`<option value="${c}">${c}</option>`).join('')
+    : '<option value="">Elegí la provincia primero</option>';
+}
+
+function loginTab(tab) {
+  document.querySelectorAll('.ltab').forEach((t,i) => t.classList.toggle('on',(i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('lt-login').style.display = tab==='login'?'block':'none';
+  document.getElementById('lt-register').style.display = tab==='register'?'block':'none';
+}
+
+async function loginEmail() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  if (!email||!pass) { showToastEl('toast-login','Completá email y contraseña','err'); return; }
+  showToastEl('toast-login','Ingresando...','info');
+  try {
+    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+    await afterLogin(data.user);
+  } catch(e) {
+    showToastEl('toast-login', e.message.includes('Invalid') ? 'Email o contraseña incorrectos' : e.message, 'err');
+  }
+}
+
+async function registerEmail() {
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass = document.getElementById('r-pass').value;
+  const tipo = TIPO_REGISTRO;
+
+  if (!nombre||!email||!pass) { showToastEl('toast-reg','Completá nombre, email y contraseña','err'); return; }
+  if (pass.length < 6) { showToastEl('toast-reg','La contraseña debe tener al menos 6 caracteres','err'); return; }
+
+  let payload = { nombre, email, tipo_usuario: tipo, rating: 0, rating_provisional: true, verificado: false, avatar_iniciales: initials(nombre), partidos_jugados: 0, partidos_ganados: 0, mejor_racha: 0 };
+
+  if (tipo === 'jugador') {
+    const provincia = document.getElementById('r-provincia').value;
+    const ciudad = document.getElementById('r-ciudad').value;
+    const rol = document.getElementById('r-rol').value;
+    if (!provincia||!ciudad) { showToastEl('toast-reg','Elegí tu provincia y ciudad','err'); return; }
+    payload = { ...payload, rol, provincia, ciudad };
+  } else {
+    const clubNombre = document.getElementById('r-club-nombre')?.value.trim();
+    const provincia = document.getElementById('r-provincia-club')?.value;
+    const ciudad = document.getElementById('r-ciudad-club')?.value;
+    const telefono = document.getElementById('r-telefono')?.value.trim();
+    if (!clubNombre) { showToastEl('toast-reg','Ingresá el nombre del club u organización','err'); return; }
+    if (!provincia||!ciudad) { showToastEl('toast-reg','Elegí provincia y ciudad','err'); return; }
+    payload = { ...payload, provincia, ciudad, telefono_visible: telefono || null };
+  }
+
+  showToastEl('toast-reg','Creando cuenta...','info');
+  try {
+    const { data, error } = await supa.auth.signUp({ email, password: pass, options: { data: { nombre, tipo } } });
+    if (error) throw error;
+    if (data.user) {
+      const { error: dbErr } = await supa.from('jugadores').insert(payload);
+      if (dbErr) console.error('Error guardando perfil:', dbErr);
+    }
+    showToastEl('toast-reg','¡Cuenta creada! Ya podés ingresar.','ok');
+    setTimeout(() => loginTab('login'), 2000);
+  } catch(e) {
+    showToastEl('toast-reg', e.message.includes('already') ? 'Este email ya está registrado' : e.message, 'err');
+  }
+}
+
+async function loginGoogle() {
+  try {
+    const { error } = await supa.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href }
+    });
+    if (error) throw error;
+  } catch(e) {
+    showToastEl('toast-login','Google no está disponible ahora. Usá email y contraseña.','err');
+  }
+}
+
+async function forgotPass() {
+  const email = document.getElementById('l-email').value.trim();
+  if (!email) { showToastEl('toast-login','Ingresá tu email primero','err'); return; }
+  const { error } = await supa.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+  if (!error) showToastEl('toast-login','Te mandamos un email para resetear la contraseña','ok');
+  else showToastEl('toast-login', error.message, 'err');
+}
+
+async function afterLogin(user) {
+  const isAdmin = ADMIN_EMAILS.includes(user.email);
+  if (isAdmin) {
+    showView('admin');
+    document.getElementById('admin-email-label').textContent = user.email;
+    document.getElementById('admin-av').textContent = initials(user.email);
+    await loadAdminDashboard();
+    await loadAdminJugadores();
+    return;
+  }
+  showView('app');
+  await loadMyPlayer(user.email);
+  await loadAllPlayers();
+  loadHomeMatches();
+  loadHomeTorneos();
+  renderSparkline();
+}
+
+async function logout() {
+  await supa.auth.signOut();
+  MY_PLAYER = null;
+  showView('login');
+}
+
+// ══════════════════════════════════════
+// APP — JUGADOR
+// ══════════════════════════════════════
+function appGoTo(pg, btn) {
+  document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('app-'+pg).classList.add('active');
+  btn.classList.add('on');
+  const ttl = document.getElementById('app-ttl'), lo = document.getElementById('app-logo');
+  const names = {home:'',torneos:'Torneos',cargar:'Cargar partido',ranking:'Ranking',perfil:'Mi perfil'};
+  if (pg==='home') { lo.style.display=''; ttl.style.display='none'; }
+  else { lo.style.display='none'; ttl.style.display=''; ttl.textContent=names[pg]||''; }
+  if (pg==='torneos') loadTorneos();
+  if (pg==='ranking') loadRanking();
+  if (pg==='perfil') loadPerfil();
+}
+
+async function loadMyPlayer(email) {
+  try {
+    const { data } = await supa.from('jugadores').select('*').eq('email', email).single();
+    MY_PLAYER = data || { nombre: email.split('@')[0], rating: 0, rol: 'derecha', partidos_jugados: 0, partidos_ganados: 0, mejor_racha: 0, avatar_iniciales: initials(email), ciudad: 'Buenos Aires' };
+    MY_RATING = parseFloat(MY_PLAYER.rating);
+    IS_PRO = MY_PLAYER.es_pro || false;
+    document.getElementById('home-loading').style.display = 'none';
+    document.getElementById('home-content').style.display = 'block';
+    document.getElementById('home-av').textContent = MY_PLAYER.avatar_iniciales || initials(MY_PLAYER.nombre);
+    document.getElementById('home-nombre').textContent = MY_PLAYER.nombre;
+    document.getElementById('home-rating').textContent = Math.round(MY_RATING);
+    document.getElementById('p-r-big').textContent = Math.round(MY_RATING);
+    document.getElementById('p-name').textContent = MY_PLAYER.nombre + ' · ' + MY_PLAYER.ciudad;
+    document.getElementById('home-rol').textContent = MY_PLAYER.rol === 'derecha' ? 'Derecha' : 'Revés';
+    document.getElementById('home-delta').textContent = '↑ rating actualizado en vivo';
+    const wr = MY_PLAYER.partidos_jugados > 0 ? Math.round((MY_PLAYER.partidos_ganados/MY_PLAYER.partidos_jugados)*100) : 0;
+    document.getElementById('h-pj').textContent = MY_PLAYER.partidos_jugados || 0;
+    document.getElementById('h-wr').textContent = wr + '%';
+    document.getElementById('h-racha').textContent = MY_PLAYER.mejor_racha || 0;
+  } catch(e) {
+    document.getElementById('home-loading').style.display = 'none';
+    document.getElementById('home-content').style.display = 'block';
+  }
+}
+
+async function loadAllPlayers() {
+  const { data } = await supa.from('jugadores').select('id,nombre,rating,rol,avatar_iniciales').order('rating',{ascending:false});
+  ALL_PLAYERS = data || [];
+  ['sel-s','sel-r1','sel-r2'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const labels = ['compañero...','rival 1...','rival 2...'];
+    el.innerHTML = `<option value="">Seleccionar ${labels[i]}</option>` +
+      ALL_PLAYERS.filter(p => p.id !== MY_PLAYER?.id).map(p => `<option value="${p.id}" data-r="${p.rating}">${p.nombre} — ${Math.round(p.rating)}</option>`).join('');
+  });
+}
+
+async function loadHomeMatches() {
+  if (!MY_PLAYER?.id) {
+    document.getElementById('home-matches').innerHTML = '<div class="empty" style="padding:16px 0;">Registrá tu primer partido para ver el historial</div>';
+    return;
+  }
+  try {
+    const { data } = await supa
+      .from('historial_rating')
+      .select('*, partido:partido_id(set1_a,set1_b,set2_a,set2_b,ganador,created_at)')
+      .eq('jugador_id', MY_PLAYER.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (!data || data.length === 0) {
+      document.getElementById('home-matches').innerHTML = '<div class="empty" style="padding:16px 0;">Todavía no jugaste ningún partido registrado</div>';
+      return;
+    }
+    document.getElementById('home-matches').innerHTML = data.map(h => `
+      <div class="mrow">
+        <div>
+          <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;">${h.partido ? h.partido.set1_a+'-'+h.partido.set1_b+' / '+h.partido.set2_a+'-'+h.partido.set2_b : '—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">${new Date(h.created_at).toLocaleDateString('es-AR')}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="pill ${h.delta>=0?'pg':'pr'}">${h.delta>=0?'+':''}${parseFloat(h.delta).toFixed(0)} pts</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;">${parseFloat(h.rating_antes).toFixed(0)}→${parseFloat(h.rating_despues).toFixed(0)}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('home-matches').innerHTML = '<div class="empty" style="padding:16px 0;">Error cargando partidos</div>';
+  }
+}
+
+async function loadHomeTorneos() {
+  try {
+    const { data } = await supa.from('torneos').select('*').eq('estado','abierto').lte('rating_min',MY_RATING).gte('rating_max',MY_RATING).limit(2);
+    document.getElementById('home-torneos').innerHTML = (data||[]).map(t => `
+      <div style="background:var(--surf);border:1px solid var(--green-b);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;" onclick="appGoTo('torneos',document.querySelectorAll('.nb')[1])">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+          <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;">${t.nombre}</div><div style="font-size:11px;color:var(--muted);">${t.fecha_inicio}</div></div>
+          <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--green-l);color:var(--green-d);">Compatible</span>
+        </div>
+        <div style="display:flex;gap:5px;"><span class="pill pgr">${t.cupos_ocupados}/${t.cupos_max}</span><span class="pill pa">${fmt$(t.precio)}</span></div>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--muted);">No hay torneos compatibles próximos.</div>';
+  } catch(e) {}
+}
+
+async function loadTorneos() {
+  const zona = document.getElementById('fil-z')?.value||'';
+  const nivel = document.getElementById('fil-n')?.value||'compat';
+  document.getElementById('tt-p').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  let q = supa.from('torneos').select('*').eq('estado','abierto').order('fecha_inicio');
+  if (zona) q = q.eq('zona',zona);
+  if (nivel==='compat') q = q.lte('rating_min',MY_RATING).gte('rating_max',MY_RATING);
+  const { data } = await q;
+  const isCompat = t => MY_RATING>=t.rating_min && MY_RATING<=t.rating_max;
+  document.getElementById('tt-p').innerHTML = (data||[]).map(t => {
+    const c = isCompat(t);
+    const pct = Math.round(t.cupos_ocupados/t.cupos_max*100);
+    return `<div class="tcard${t.patrocinado?' sponsored':c?' compat':''}">
+      ${t.patrocinado?`<div style="margin-bottom:8px;"><span style="background:var(--amber-l);color:var(--amber);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;">Patrocinado por ${t.sponsor_nombre}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:600;margin-bottom:2px;">${t.nombre}</div><div style="font-size:12px;color:var(--muted);">${t.fecha_inicio}</div></div>
+        <span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:${c?'var(--green-l)':'var(--g100)'};color:${c?'var(--green-d)':'var(--g400)'};">${c?'✓ Compat':'Fuera nivel'}</span>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;"><span class="pill pgr">Rating ${t.rating_min}–${t.rating_max}</span><span class="pill pa">${fmt$(t.precio)}</span></div>
+      <div class="prog"><div class="pfill" style="width:${pct}%;"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">${t.cupos_ocupados}/${t.cupos_max} inscriptos · ${t.formato}</div>
+      ${c?`<button class="btn btng" style="padding:11px;" onclick="openInsc('${t.id}')">Inscribirme · ${fmt$(t.precio+Math.round(t.precio*.1))}</button>`:`<div style="padding:10px;background:var(--g100);border-radius:8px;text-align:center;font-size:12px;color:var(--muted);">Tu rating no cumple el requisito</div>`}
+    </div>`;
+  }).join('') || '<div class="empty">No hay torneos con ese filtro</div>';
+}
+
+function switchTTab(tab,show) {
+  document.querySelectorAll('#app-torneos .tab').forEach(t=>t.classList.remove('on'));
+  tab.classList.add('on');
+  ['tt-p','tt-m'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=id===show?'block':'none'; });
+}
+
+async function openInsc(torneoId) {
+  const { data: t } = await supa.from('torneos').select('*').eq('id',torneoId).single();
+  currentT = t; selPartner = null; inscMode = 'pareja';
+  const fee = Math.round(t.precio*.1), total = t.precio + fee;
+  document.getElementById('m-insc-body').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div><div style="font-size:16px;font-weight:600;">${t.nombre}</div><div style="font-size:12px;color:var(--muted);">${t.fecha_inicio}</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-insc').classList.remove('show')">✕</div>
+    </div>
+    <div style="background:var(--g50);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--muted);">Inscripción</span><span>${fmt$(t.precio)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--muted);">Fee Mito (10%)</span><span>${fmt$(fee)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:600;"><span>Total</span><span style="font-family:'DM Mono',monospace;">${fmt$(total)}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div id="opt-p" onclick="setIM('pareja')" style="padding:11px;border:2px solid var(--green-m);border-radius:10px;background:var(--green-l);text-align:center;cursor:pointer;"><div style="font-size:18px;margin-bottom:3px;">👥</div><div style="font-size:12px;font-weight:600;color:var(--green-d);">Con pareja</div></div>
+      <div id="opt-s" onclick="setIM('solo')" style="padding:11px;border:1px solid var(--bdr);border-radius:10px;text-align:center;cursor:pointer;"><div style="font-size:18px;margin-bottom:3px;">🙋</div><div style="font-size:12px;color:var(--muted);">Buscar pareja</div></div>
+    </div>
+    <div id="insc-sec"></div>
+    <div id="toast-insc" class="toast"></div>
+    <button class="btn btng" onclick="confirmarInsc('${t.id}')">Confirmar · ${fmt$(total)}</button>`;
+  renderInscSec();
+  document.getElementById('m-insc').classList.add('show');
+}
+
+function setIM(mode) {
+  inscMode = mode;
+  ['p','s'].forEach(x => {
+    const el = document.getElementById('opt-'+x), active=(x==='p'&&mode==='pareja')||(x==='s'&&mode==='solo');
+    if(el){ el.style.cssText=active?'padding:11px;border:2px solid var(--green-m);border-radius:10px;background:var(--green-l);text-align:center;cursor:pointer;':'padding:11px;border:1px solid var(--bdr);border-radius:10px;text-align:center;cursor:pointer;'; el.querySelector('div:last-child').style.color=active?'var(--green-d)':'var(--muted)'; }
+  });
+  renderInscSec();
+}
+
+function renderInscSec() {
+  const el = document.getElementById('insc-sec');
+  if (!el) return;
+  const others = ALL_PLAYERS.filter(p=>p.id!==MY_PLAYER?.id).slice(0,4);
+  if (inscMode==='solo') {
+    el.innerHTML = `<div style="background:var(--g50);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;">El sistema te conecta con jugadores sin pareja con rating compatible.</div>`;
+  } else {
+    el.innerHTML = `<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Elegí tu pareja</div>` +
+      others.map((p,i)=>`<div class="popt${selPartner===p.id?' sel':''}" onclick="selPartner='${p.id}';renderInscSec()"><div class="av av-md ${avColor(i)}">${p.avatar_iniciales||initials(p.nombre)}</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">${p.nombre}</div><div style="font-size:11px;color:var(--muted);">${Math.round(p.rating)} · ${p.rol}</div></div>${selPartner===p.id?'<span style="color:var(--green);font-size:18px;">✓</span>':''}</div>`).join('') + '<div style="height:8px;"></div>';
+  }
+}
+
+async function confirmarInsc(torneoId) {
+  if (inscMode==='pareja'&&!selPartner) { showToastEl('toast-insc','Seleccioná una pareja primero','err'); return; }
+  try {
+    const t = currentT;
+    await supa.from('inscripciones').insert({ torneo_id: torneoId, jugador1_id: MY_PLAYER?.id, jugador2_id: selPartner||null, modo: inscMode, precio_pagado: t.precio, fee_mito: Math.round(t.precio*.1), estado: 'confirmada' });
+    await supa.from('torneos').update({ cupos_ocupados: t.cupos_ocupados+1 }).eq('id',torneoId);
+    showToastEl('toast-insc','¡Inscripto! Notificaciones enviadas.');
+    setTimeout(()=>{ document.getElementById('m-insc').classList.remove('show'); loadTorneos(); loadHomeTorneos(); },1800);
+  } catch(e) { showToastEl('toast-insc','Error al inscribirse.','err'); }
+}
+
+function calcPreview() {
+  const s1a=+document.getElementById('s1a').value||0, s1b=+document.getElementById('s1b').value||0;
+  if(!s1a&&!s1b) return;
+  const s2a=+document.getElementById('s2a').value||0, s2b=+document.getElementById('s2b').value||0;
+  const win=(s1a>s1b?1:0)+(s2a>s2b?1:0)>=1;
+  const margin=Math.abs(s1a-s1b)+Math.abs(s2a-s2b);
+  const mm=margin>6?1.5:margin>3?1.0:0.7;
+  const Rb=1450,Ea=1/(1+Math.pow(10,(Rb-MY_RATING)/400));
+  const delta=Math.round(32*mm*((win?1:0)-Ea));
+  const box=document.getElementById('prev-box'),val=document.getElementById('prev-v');
+  box.style.display='block';
+  val.textContent=(delta>=0?'+':'')+delta+' pts → '+(MY_RATING+delta);
+  val.style.color=delta>=0?'var(--green)':'var(--red)';
+  document.getElementById('prev-p').textContent=Math.round(Ea*100)+'%';
+}
+
+async function registrarPartido() {
+  const s=document.getElementById('sel-s').value,r1=document.getElementById('sel-r1').value,r2=document.getElementById('sel-r2').value;
+  if(!s||!r1||!r2){ showToastEl('toast-c','Completá todos los campos','err'); return; }
+  showToastEl('toast-c','Registrando...','info');
+  const s1a=+document.getElementById('s1a').value||6,s1b=+document.getElementById('s1b').value||3;
+  const s2a=+document.getElementById('s2a').value||6,s2b=+document.getElementById('s2b').value||4;
+  const win=(s1a>s1b?1:0)+(s2a>s2b?1:0)>=1;
+  try {
+    await supa.from('partidos').insert({ jugador1_id:MY_PLAYER?.id,jugador2_id:s,jugador3_id:r1,jugador4_id:r2,set1_a:s1a,set1_b:s1b,set2_a:s2a,set2_b:s2b,ganador:win?'AB':'CD',registrado_por:MY_PLAYER?.id,confirmado_por_j1:true });
+    showToastEl('toast-c','✓ Partido registrado. Los 3 jugadores recibieron notificación.','ok');
+    setTimeout(()=>appGoTo('home',document.querySelector('.nb')),2000);
+  } catch(e){ showToastEl('toast-c','Error al registrar.','err'); }
+}
+
+async function loadRanking() {
+  const { data } = await supa.from('jugadores').select('id,nombre,rating,ciudad,avatar_iniciales').order('rating',{ascending:false}).limit(20);
+  ['rk-b','rk-a','rk-c'].forEach(id => {
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.innerHTML=(data||[]).map((p,i)=>{
+      const isMe=p.id===MY_PLAYER?.id;
+      return `<div class="rrow${isMe?' rme':''}">
+        <div style="width:24px;font-size:13px;font-weight:600;text-align:center;color:${i<3?'var(--green-d)':'var(--muted)'};font-family:'DM Mono',monospace;">${i+1}</div>
+        <div class="av av-md ${avColor(i)}">${p.avatar_iniciales||initials(p.nombre)}</div>
+        <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:${isMe?'600':'400'};">${p.nombre}${isMe?' (vos)':''}</div><div style="font-size:11px;color:var(--muted);">${p.ciudad||'Buenos Aires'}</div></div>
+        <div style="font-size:14px;font-weight:600;color:${isMe?'var(--green)':'var(--txt)'};font-family:'DM Mono',monospace;">${Math.round(p.rating)}</div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function switchRkTab(tab,show) {
+  document.querySelectorAll('#app-ranking .tab').forEach(t=>t.classList.remove('on'));
+  tab.classList.add('on');
+  ['rk-b','rk-a','rk-c'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=id===show?'block':'none'; });
+}
+
+async function loadPerfil() {
+  const { data } = await supa.from('productos').select('*').eq('activo',true);
+  document.getElementById('productos-list').innerHTML=(data||[]).map((p,i)=>`
+    <div style="background:var(--g50);border-radius:10px;padding:12px;border:1px solid var(--bdr);cursor:pointer;">
+      <div style="width:100%;height:60px;background:${i%2===0?'var(--green-l)':'var(--amber-l)'};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:8px;">${p.imagen_emoji||'🏏'}</div>
+      <div style="font-size:12px;font-weight:600;">${p.nombre}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--green);margin-top:4px;font-family:'DM Mono',monospace;">${fmt$(p.precio)}</div>
+    </div>`).join('');
+  setTimeout(()=>{
+    const ctx=document.getElementById('evo-chart');
+    if(!ctx||ctx._done) return; ctx._done=true;
+    new Chart(ctx.getContext('2d'),{type:'line',data:{labels:['Inicio','Hoy'],datasets:[{data:[1200,MY_RATING],borderColor:'#1a6b4a',borderWidth:2,pointRadius:3,tension:.4,fill:true,backgroundColor:'rgba(26,107,74,.07)'}]},options:{responsive:true,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:true,ticks:{font:{size:10},color:'#9c9890'}},y:{display:true,ticks:{font:{size:10,family:"'DM Mono',monospace"},color:'#9c9890'}}}}});
+  },100);
+}
+
+async function activatePro(plan) {
+  IS_PRO=true;
+  if(MY_PLAYER?.id){ await supa.from('jugadores').update({es_pro:true}).eq('id',MY_PLAYER.id); await supa.from('suscripciones_pro').upsert({jugador_id:MY_PLAYER.id,plan,precio_mensual:plan==='anual'?3200:4500,vencimiento:new Date(Date.now()+(plan==='anual'?365:30)*24*60*60*1000).toISOString(),activa:true},{onConflict:'jugador_id'}); }
+  document.getElementById('m-pro').classList.remove('show');
+  alert(`✓ Mito Pro activado · Plan ${plan==='anual'?'anual ($3.200/mes)':'mensual ($4.500/mes)'}\n\n• 15% descuento en inscripciones\n• Perfil destacado en el ranking`);
+}
+
+function shareRating() {
+  const r=document.getElementById('home-rating').textContent;
+  const msg=`Mi rating Mito es ${r} 🎾\nvranjican22-droid.github.io/mitorating/mito-rating.html`;
+  if(navigator.share) navigator.share({title:'Mito Rating',text:msg}).catch(()=>{});
+  else alert('Compartí tu rating:\n\n'+msg);
+}
+
+async function openNotifs() {
+  document.getElementById('notifs-body').innerHTML='<div class="empty">No tenés notificaciones</div>';
+  document.getElementById('m-notifs').classList.add('show');
+  document.getElementById('ndot').style.display='none';
+}
+
+function renderSparkline() {
+  setTimeout(()=>{
+    const ctx=document.getElementById('home-spark');
+    if(!ctx||ctx._done) return; ctx._done=true;
+    new Chart(ctx.getContext('2d'),{type:'line',data:{labels:Array(3).fill(''),datasets:[{data:[MY_RATING-50,MY_RATING-20,MY_RATING],borderColor:'rgba(255,255,255,.7)',borderWidth:1.5,pointRadius:0,tension:.4,fill:false}]},options:{responsive:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}}}});
+  },150);
+}
+
+// ══════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════
+const ADMIN_TITLES = {dashboard:'Dashboard',jugadores:'Jugadores',torneos:'Torneos',partidos:'Partidos',ingresos:'Ingresos',clubes:'Clubes'};
+
+function adminGoTo(pg, btn) {
+  document.querySelectorAll('.admin-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.anav').forEach(b=>b.classList.remove('on'));
+  document.getElementById('adm-'+pg).classList.add('active');
+  btn.classList.add('on');
+  document.getElementById('admin-page-title').textContent = ADMIN_TITLES[pg]||'';
+  if(pg==='jugadores') loadAdminJugadores();
+  if(pg==='torneos') loadAdminTorneos();
+  if(pg==='partidos') loadAdminPartidos();
+  if(pg==='ingresos') loadAdminIngresos();
+  if(pg==='clubes') loadAdminClubes();
+}
+
+async function loadAdminDashboard() {
+  const [jRes,tRes,inscRes,proRes] = await Promise.all([
+    supa.from('jugadores').select('id,rating,es_pro,partidos_jugados,nombre,avatar_iniciales,provincia,created_at'),
+    supa.from('torneos').select('id,estado,cupos_ocupados,precio'),
+    supa.from('inscripciones').select('fee_mito,precio_pagado,created_at'),
+    supa.from('suscripciones_pro').select('id,activa,precio_mensual').eq('activa',true),
+  ]);
+  const jugadores=jRes.data||[],torneos=tRes.data||[],inscripciones=inscRes.data||[],proSubs=proRes.data||[];
+  const totalFees=inscripciones.reduce((s,i)=>s+(i.fee_mito||0),0);
+  const totalPro=proSubs.reduce((s,p)=>s+(p.precio_mensual||0),0);
+  const torneoAbiertos=torneos.filter(t=>t.estado==='abierto').length;
+  document.getElementById('kpi-grid').innerHTML=[
+    {label:'Jugadores activos',val:jugadores.length,sub:jugadores.filter(j=>j.es_pro).length+' con Pro'},
+    {label:'Torneos activos',val:torneoAbiertos,sub:torneos.length+' total'},
+    {label:'Ingresos este mes',val:fmt$(totalFees+totalPro),sub:fmt$(totalFees)+' fees + '+fmt$(totalPro)+' Pro',up:true},
+    {label:'Suscriptores Pro',val:proSubs.length,sub:fmt$(totalPro)+'/mes recurrente',up:true},
+  ].map(k=>`<div class="kpi"><div class="kpi-label">${k.label}</div><div class="kpi-val${k.up?' kpi-up':''}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+  const maxRev=Math.max(totalFees,totalPro,1);
+  document.getElementById('rev-sources').innerHTML=[
+    {label:'Fees torneos',val:totalFees},{label:'Mito Pro',val:totalPro},{label:'Tienda (proy.)',val:Math.round((totalFees+totalPro)*.15)},
+  ].map(r=>`<div class="rev-bar"><div style="font-size:13px;flex:1;">${r.label}</div><div class="rev-bar-wrap"><div class="rev-bar-fill" style="width:${Math.min(100,Math.round(r.val/maxRev*100))}%;"></div></div><div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;min-width:80px;text-align:right;">${fmt$(r.val)}</div></div>`).join('');
+  const top5=[...jugadores].sort((a,b)=>b.rating-a.rating).slice(0,5);
+  document.getElementById('top5').innerHTML=top5.map((j,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr);"><div style="width:20px;font-size:12px;font-weight:600;color:${i<3?'var(--green-d)':'var(--g400)'};">${i+1}</div><div class="av av-md avg">${j.avatar_iniciales||'?'}</div><div style="flex:1;font-size:13px;">${j.nombre||'—'}</div><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;">${Math.round(j.rating)}</div></div>`).join('');
+  // Mapa por provincia
+  const provCount={};
+  jugadores.forEach(j=>{const p=j.provincia||'Sin datos';provCount[p]=(provCount[p]||0)+1;});
+  const sortedProv=Object.entries(provCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxProv=Math.max(...sortedProv.map(x=>x[1]),1);
+  const mapEl=document.getElementById('mapa-prov');
+  if(mapEl) mapEl.innerHTML=sortedProv.map(([prov,count])=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--bdr);"><div style="font-size:12px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${prov}</div><div style="flex:2;height:6px;background:var(--g100);border-radius:3px;overflow:hidden;"><div style="width:${Math.round(count/maxProv*100)}%;height:6px;border-radius:3px;background:var(--green-m);"></div></div><div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;min-width:20px;text-align:right;">${count}</div></div>`).join('')||'<div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin datos de provincia</div>';
+  // Gráfico crecimiento
+  const byMonth={};
+  jugadores.forEach(j=>{if(!j.created_at)return;const m=new Date(j.created_at).toLocaleDateString('es-AR',{month:'short',year:'2-digit'});byMonth[m]=(byMonth[m]||0)+1;});
+  const chartLabels=Object.keys(byMonth),chartVals=Object.values(byMonth);
+  setTimeout(()=>{
+    const ctx=document.getElementById('chart-crecimiento');
+    if(!ctx||ctx._done)return;ctx._done=true;
+    new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:chartLabels.length?chartLabels:['Hoy'],datasets:[{data:chartVals.length?chartVals:[jugadores.length],backgroundColor:'rgba(26,107,74,.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},stepSize:1}}}}});
+  },100);
+  // Proyección
+  const avgMensual=totalFees+totalPro;
+  const proyEl=document.getElementById('proyeccion');
+  if(proyEl) proyEl.innerHTML=[{label:'Este mes',val:fmt$(avgMensual)},{label:'Mes 3 (est.)',val:fmt$(avgMensual*3||125000)},{label:'Mes 6 (est.)',val:fmt$(avgMensual*6||920000)},{label:'Mes 12 (est.)',val:fmt$(avgMensual*12||3000000)}].map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:13px;"><span style="color:var(--muted);">${p.label}</span><span style="font-weight:600;font-family:'DM Mono',monospace;color:var(--green-d);">${p.val}</span></div>`).join('');
+  const {data:recientes}=await supa.from('partidos').select('*').order('created_at',{ascending:false}).limit(6);
+  document.getElementById('actividad').innerHTML=`<table><thead><tr><th>Fecha</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>${(recientes||[]).map(p=>`<tr><td style="font-size:12px;color:var(--g600);">${fmtDate(p.created_at)}</td><td style="font-family:'DM Mono',monospace;font-size:12px;">${p.set1_a||'?'}-${p.set1_b||'?'} / ${p.set2_a||'?'}-${p.set2_b||'?'}</td><td><span class="pill ${p.confirmado?'pg':'pa'}">${p.confirmado?'✓ Confirmado':'⏳ Pendiente'}</span></td></tr>`).join('')}</tbody></table>`;
+}
+
+async function loadAdminJugadores() {
+  const {data}=await supa.from('jugadores').select('*').order('rating',{ascending:false});
+  ALL_J_ADMIN=data||[];
+  renderAdminJugadores(ALL_J_ADMIN);
+}
+
+function renderAdminJugadores(data) {
+  document.getElementById('tabla-j').innerHTML=data.map(j=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;"><div class="av av-md avg">${j.avatar_iniciales||'?'}</div><div><div style="font-size:13px;font-weight:500;">${j.nombre}</div><div style="font-size:11px;color:var(--g600);">${j.email||'—'}</div></div></div></td>
+    <td><div style="font-family:'DM Mono',monospace;font-weight:600;">${Math.round(j.rating)}</div><div style="font-size:10px;color:var(--muted);">${j.rating_provisional?'provisional':''}</div></td>
+    <td><span class="pill ${j.rol==='derecha'?'pg':'pp'}">${j.rol}</span></td>
+    <td style="font-size:12px;">${j.provincia||'—'}<br><span style="color:var(--muted);">${j.ciudad||'—'}</span></td>
+    <td style="font-family:'DM Mono',monospace;">${j.partidos_jugados||0}</td>
+    <td>${j.verificado?'<span class="pill pg">✓ Verificado</span>':'<span class="pill pa">Sin verificar</span>'}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="sbtn sbtn-gr" onclick="verJugador('${j.id}')">Ver</button>
+      <button class="sbtn sbtn-gr" onclick="editJ('${j.id}')">Editar</button>
+      <button class="sbtn sbtn-r" onclick="toggleVerif('${j.id}',${j.verificado})">${j.verificado?'Revocar':'Verificar'}</button>
+      <button class="sbtn sbtn-r" onclick="deleteJ('${j.id}','${(j.nombre||'').replace(/'/g,"\\'")}')">Eliminar</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterJ() { const q=document.getElementById('search-j').value.toLowerCase(); renderAdminJugadores(ALL_J_ADMIN.filter(j=>j.nombre?.toLowerCase().includes(q)||j.email?.toLowerCase().includes(q)||j.ciudad?.toLowerCase().includes(q))); }
+async function toggleVerif(id,actual) { await supa.from('jugadores').update({verificado:!actual}).eq('id',id); loadAdminJugadores(); }
+async function deleteJ(id, nombre) {
+  if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+  await supa.from('jugadores').delete().eq('id',id);
+  loadAdminJugadores();
+}
+
+async function verJugador(id) {
+  const j=ALL_J_ADMIN.find(x=>x.id===id);
+  if(!j)return;
+  const {data:hist}=await supa.from('historial_rating').select('*,partido:partido_id(set1_a,set1_b,set2_a,set2_b,ganador)').eq('jugador_id',id).order('created_at',{ascending:false}).limit(10);
+  document.getElementById('ver-j-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;"><div class="av av-md avg">${j.avatar_iniciales||'?'}</div><div><div style="font-size:17px;font-weight:600;">${j.nombre}</div><div style="font-size:12px;color:var(--muted);">${j.email}</div></div></div>
+      <div class="ibtn" onclick="document.getElementById('m-ver-jugador').classList.remove('show')">✕</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+      <div class="sbox"><div class="sn">${Math.round(j.rating)}</div><div class="sl">Rating</div></div>
+      <div class="sbox"><div class="sn">${j.partidos_jugados||0}</div><div class="sl">Partidos</div></div>
+      <div class="sbox"><div class="sn">${j.partidos_jugados>0?Math.round((j.partidos_ganados/j.partidos_jugados)*100):0}%</div><div class="sl">Win rate</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Editar rating manualmente</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <input class="fi" type="number" id="edit-rating-val" value="${Math.round(j.rating)}" style="margin-bottom:0;flex:1;">
+      <button class="btn btng" style="width:auto;padding:11px 16px;" onclick="editRatingManual('${id}')">Actualizar</button>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Historial de rating</div>
+    ${(hist||[]).length>0
+      ?`<table><thead><tr><th>Fecha</th><th>Resultado</th><th>Antes</th><th>Después</th><th>Delta</th></tr></thead><tbody>${hist.map(h=>`<tr>
+        <td style="font-size:11px;">${fmtDate(h.created_at)}</td>
+        <td style="font-size:11px;font-family:'DM Mono',monospace;">${h.partido?h.partido.set1_a+'-'+h.partido.set1_b+'/'+h.partido.set2_a+'-'+h.partido.set2_b:'—'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;">${Math.round(h.rating_antes||0)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px;">${Math.round(h.rating_despues||0)}</td>
+        <td><span class="pill ${(h.delta||0)>=0?'pg':'pr'}" style="font-size:10px;">${(h.delta||0)>=0?'+':''}${Math.round(h.delta||0)}</span></td>
+      </tr>`).join('')}</tbody></table>`
+      :'<div style="font-size:12px;color:var(--muted);padding:8px 0;">Sin historial todavía</div>'
+    }`;
+  document.getElementById('m-ver-jugador').classList.add('show');
+}
+
+async function editRatingManual(id) {
+  const v=parseInt(document.getElementById('edit-rating-val').value);
+  if(isNaN(v)){alert('Ingresá un número válido');return;}
+  await supa.from('jugadores').update({rating:v}).eq('id',id);
+  loadAdminJugadores();
+  alert('Rating actualizado a '+v);
+}
+
+function exportJugadoresCSV() {
+  const headers=['Nombre','Email','Rating','Rol','Provincia','Ciudad','Partidos','Verificado'];
+  const rows=ALL_J_ADMIN.map(j=>[j.nombre,j.email,Math.round(j.rating),j.rol,j.provincia||'',j.ciudad||'',j.partidos_jugados||0,j.verificado?'Sí':'No']);
+  const csv=[headers,...rows].map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jugadores-mito.csv';a.click();
+}
+function editJ(id) {
+  const j = ALL_J_ADMIN.find(x=>x.id===id);
+  if (!j) return;
+  document.getElementById('nj-nombre').value = j.nombre||'';
+  document.getElementById('nj-email').value = j.email||'';
+  document.getElementById('nj-rating').value = Math.round(j.rating||1200);
+  document.getElementById('nj-rol').value = j.rol||'derecha';
+  // Set provincia
+  const provSel = document.getElementById('nj-provincia');
+  if (provSel) provSel.value = j.provincia||'';
+  // Populate cities for this province then set city
+  setProvincia(j.provincia||'', j.ciudad||'');
+  document.getElementById('modal-new-j').dataset.editId = id;
+  document.getElementById('modal-new-j-title').textContent = 'Editar: ' + j.nombre;
+  document.getElementById('modal-new-j').classList.add('show');
+}
+
+function openNewJ() {
+  document.getElementById('modal-new-j').dataset.editId = '';
+  document.getElementById('modal-new-j-title').textContent = 'Nuevo jugador';
+  document.getElementById('nj-nombre').value = '';
+  document.getElementById('nj-email').value = '';
+  document.getElementById('nj-rating').value = 0;
+  document.getElementById('nj-rol').value = 'derecha';
+  const provSel = document.getElementById('nj-provincia');
+  if (provSel) provSel.value = '';
+  document.getElementById('nj-ciudad').innerHTML = '<option value="">Primero elegí la provincia</option>';
+  document.getElementById('modal-new-j').classList.add('show');
+}
+
+async function saveNewJ() {
+  const editId = document.getElementById('modal-new-j').dataset.editId;
+  const nombre = document.getElementById('nj-nombre').value.trim();
+  const email  = document.getElementById('nj-email').value.trim();
+  const rating = parseInt(document.getElementById('nj-rating').value) || 1200;
+  const rol    = document.getElementById('nj-rol').value;
+  const provincia = document.getElementById('nj-provincia')?.value || '';
+  const ciudad = document.getElementById('nj-ciudad')?.value || '';
+  if (!nombre || !email) { alert('Nombre y email son obligatorios'); return; }
+  try {
+    const payload = { nombre, rating, rol };
+    if (provincia) payload.provincia = provincia;
+    if (ciudad) payload.ciudad = ciudad;
+    payload.avatar_iniciales = initials(nombre);
+    if (editId) {
+      const { error } = await supa.from('jugadores').update(payload).eq('id', editId);
+      if (error) throw error;
+    } else {
+      const { error } = await supa.from('jugadores').insert({
+        ...payload, email,
+        rating_provisional: true, verificado: false,
+        partidos_jugados: 0, partidos_ganados: 0, mejor_racha: 0
+      });
+      if (error) throw error;
+    }
+    document.getElementById('modal-new-j').classList.remove('show');
+    loadAdminJugadores();
+  } catch(e) {
+    alert('Error: ' + (e.message.includes('unique') ? 'Ese email ya existe' : e.message));
+  }
+}
+
+async function loadAdminTorneos() {
+  const {data}=await supa.from('torneos').select('*').order('fecha_inicio');
+  ALL_T_ADMIN=data||[];
+  renderAdminTorneos(ALL_T_ADMIN);
+}
+
+function renderAdminTorneos(data) {
+  document.getElementById('tabla-t').innerHTML=data.map(t=>`<tr>
+    <td><div style="font-size:13px;font-weight:500;">${t.nombre}</div>${t.patrocinado?`<span class="pill pa" style="font-size:9px;">Patrocinado</span>`:''}<div style="font-size:11px;color:var(--muted);">${t.direccion||''}</div></td>
+    <td style="font-size:12px;">${fmtDate(t.fecha_inicio)}<br><span style="color:var(--muted);font-size:11px;">${t.horario||''}</span></td>
+    <td style="font-size:12px;font-family:'DM Mono',monospace;">${t.rating_min}–${t.rating_max}</td>
+    <td><div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'DM Mono',monospace;">${t.cupos_ocupados}/${t.cupos_max}</span><div style="width:40px;height:4px;background:var(--g100);border-radius:2px;"><div style="width:${Math.round(t.cupos_ocupados/t.cupos_max*100)}%;height:4px;background:var(--green-m);border-radius:2px;"></div></div></div></td>
+    <td style="font-family:'DM Mono',monospace;">${fmt$(t.precio)}</td>
+    <td><span class="pill ${t.estado==='abierto'?'pg':'pgr'}">${t.estado}</span></td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="sbtn sbtn-gr" onclick="verInscriptos('${t.id}','${(t.nombre||'').replace(/'/g,"\\'")}')">Inscriptos</button>
+      <button class="sbtn sbtn-gr" onclick="verCuadro('${t.id}','${(t.nombre||'').replace(/'/g,"\\'")}')">Cuadro</button>
+      <button class="sbtn sbtn-gr" onclick="notificarInscriptos('${t.id}','${(t.nombre||'').replace(/'/g,"\\'")}')">Notificar</button>
+      <button class="sbtn sbtn-gr" onclick="cambiarEstado('${t.id}','${t.estado}')">Estado</button>
+      <button class="sbtn sbtn-r" onclick="deleteTorneo('${t.id}')">✕</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterT() { const q=document.getElementById('search-t').value.toLowerCase(); renderAdminTorneos(ALL_T_ADMIN.filter(t=>t.nombre?.toLowerCase().includes(q))); }
+async function cambiarEstado(id,actual) { const estados=['borrador','abierto','en_curso','finalizado']; await supa.from('torneos').update({estado:estados[(estados.indexOf(actual)+1)%estados.length]}).eq('id',id); loadAdminTorneos(); }
+async function deleteTorneo(id) { if(!confirm('¿Eliminar?')) return; await supa.from('torneos').delete().eq('id',id); loadAdminTorneos(); }
+
+function openNewT() { document.getElementById('m-nuevo-torneo').classList.add('show'); }
+
+async function saveTorneo() {
+  const nombre=document.getElementById('nt-nombre').value.trim();
+  const fecha=document.getElementById('nt-fecha').value;
+  const horario=document.getElementById('nt-horario').value;
+  const direccion=document.getElementById('nt-direccion').value.trim();
+  const descripcion=document.getElementById('nt-descripcion').value.trim();
+  const rmin=parseInt(document.getElementById('nt-rmin').value)||0;
+  const rmax=parseInt(document.getElementById('nt-rmax').value)||9999;
+  const cupos=parseInt(document.getElementById('nt-cupos').value)||24;
+  const precio=parseInt(document.getElementById('nt-precio').value)||0;
+  const formato=document.getElementById('nt-fmt').value;
+  const spon=document.getElementById('nt-spon').checked;
+  if(!nombre||!fecha){alert('Nombre y fecha son obligatorios');return;}
+  const{error}=await supa.from('torneos').insert({nombre,zona:'bsas',fecha_inicio:fecha,horario,direccion,descripcion,rating_min:rmin,rating_max:rmax,cupos_max:cupos,cupos_ocupados:0,precio,formato,estado:'abierto',patrocinado:spon,sponsor_nombre:spon?'Mito':null,sponsor_premio:spon?'Pala Mito':null});
+  if(error){alert('Error: '+error.message);return;}
+  document.getElementById('m-nuevo-torneo').classList.remove('show');
+  loadAdminTorneos();
+}
+
+async function verInscriptos(torneoId,nombre) {
+  const{data}=await supa.from('inscripciones').select('*,j1:jugador1_id(nombre,email,rating,rol),j2:jugador2_id(nombre,rating,rol)').eq('torneo_id',torneoId).eq('estado','confirmada');
+  const insc=data||[];
+  document.getElementById('ver-j-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div><div style="font-size:17px;font-weight:600;">${nombre}</div><div style="font-size:12px;color:var(--muted);">${insc.length} inscriptos confirmados</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-ver-jugador').classList.remove('show')">✕</div>
+    </div>
+    ${insc.length>0
+      ?`<table><thead><tr><th>#</th><th>Jugador 1</th><th>Rtg</th><th>Jugador 2</th><th>Rtg</th><th>Fee</th></tr></thead><tbody>
+        ${insc.map((i,idx)=>`<tr>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;">${idx+1}</td>
+          <td style="font-size:12px;">${i.j1?.nombre||'—'}<br><span style="color:var(--muted);font-size:10px;">${i.j1?.email||''}</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;">${Math.round(i.j1?.rating||0)}</td>
+          <td style="font-size:12px;">${i.j2?.nombre||(i.modo==='solo'?'(solo)':'—')}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;">${i.j2?.rating?Math.round(i.j2.rating):'—'}</td>
+          <td style="font-family:'DM Mono',monospace;font-size:12px;">${fmt$(i.fee_mito||0)}</td>
+        </tr>`).join('')}
+        </tbody></table>
+        <div style="margin-top:12px;"><button class="btn btng" style="padding:10px;width:auto;" onclick="exportInscCSV(${JSON.stringify(insc).replace(/"/g,'&quot;')})">Exportar CSV</button></div>`
+      :'<div style="font-size:13px;color:var(--muted);padding:16px 0;">No hay inscriptos todavía</div>'
+    }`;
+  document.getElementById('m-ver-jugador').classList.add('show');
+}
+
+async function verCuadro(torneoId,nombre) {
+  const{data}=await supa.from('inscripciones').select('*,j1:jugador1_id(nombre,rating),j2:jugador2_id(nombre,rating)').eq('torneo_id',torneoId).eq('estado','confirmada');
+  const parejas=(data||[]).map((i,idx)=>({num:idx+1,p1:i.j1?.nombre||'?',p2:i.j2?.nombre||'Solo',rating:Math.round(((i.j1?.rating||0)+(i.j2?.rating||i.j1?.rating||0))/2)})).sort((a,b)=>b.rating-a.rating);
+  const mitad=Math.ceil(parejas.length/2);
+  const zona1=parejas.slice(0,mitad),zona2=parejas.slice(mitad);
+  document.getElementById('ver-j-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div><div style="font-size:17px;font-weight:600;">Cuadro — ${nombre}</div><div style="font-size:12px;color:var(--muted);">${parejas.length} parejas · por rating</div></div>
+      <div class="ibtn" onclick="document.getElementById('m-ver-jugador').classList.remove('show')">✕</div>
+    </div>
+    ${parejas.length<2?'<div style="font-size:13px;color:var(--muted);">Se necesitan al menos 2 parejas</div>':`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div><div style="font-size:12px;font-weight:600;color:var(--green-d);margin-bottom:8px;padding:6px 10px;background:var(--green-l);border-radius:6px;">ZONA A</div>
+        ${zona1.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:${i%2===0?'var(--g50)':'#fff'};border-radius:6px;margin-bottom:4px;"><div style="font-size:11px;font-weight:600;color:var(--muted);width:16px;">${i+1}</div><div style="flex:1;font-size:12px;"><div style="font-weight:500;">${p.p1}</div><div style="color:var(--muted);">${p.p2}</div></div><div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--green-d);">${p.rating}</div></div>`).join('')}
+      </div>
+      <div><div style="font-size:12px;font-weight:600;color:var(--purple);margin-bottom:8px;padding:6px 10px;background:var(--purple-l);border-radius:6px;">ZONA B</div>
+        ${zona2.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:${i%2===0?'var(--g50)':'#fff'};border-radius:6px;margin-bottom:4px;"><div style="font-size:11px;font-weight:600;color:var(--muted);width:16px;">${i+1}</div><div style="flex:1;font-size:12px;"><div style="font-weight:500;">${p.p1}</div><div style="color:var(--muted);">${p.p2}</div></div><div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--purple);">${p.rating}</div></div>`).join('')}
+      </div>
+    </div>`}`;
+  document.getElementById('m-ver-jugador').classList.add('show');
+}
+
+async function notificarInscriptos(torneoId,nombre) {
+  const msg=prompt(`Mensaje para inscriptos en "${nombre}":`);
+  if(!msg)return;
+  const{data}=await supa.from('inscripciones').select('jugador1_id').eq('torneo_id',torneoId).eq('estado','confirmada');
+  if(!data||data.length===0){alert('No hay inscriptos');return;}
+  await supa.from('notificaciones').insert(data.map(i=>({jugador_id:i.jugador1_id,tipo:'torneo',titulo:`Aviso: ${nombre}`,cuerpo:msg,leida:false})));
+  alert(`✓ Notificación enviada a ${data.length} jugador${data.length!==1?'es':''}`);
+}
+
+function exportInscCSV(insc) {
+  const headers=['#','Jugador 1','Email','Rating 1','Jugador 2','Rating 2','Fee'];
+  const rows=insc.map((i,idx)=>[idx+1,i.j1?.nombre||'',i.j1?.email||'',Math.round(i.j1?.rating||0),i.j2?.nombre||'Solo',i.j2?.rating?Math.round(i.j2.rating):'',i.fee_mito||0]);
+  const csv=[headers,...rows].map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inscriptos.csv';a.click();
+}
+
+async function loadAdminPartidos() {
+  const {data}=await supa.from('partidos').select(`*,j1:jugador1_id(nombre),j2:jugador2_id(nombre),j3:jugador3_id(nombre),j4:jugador4_id(nombre)`).order('created_at',{ascending:false}).limit(30);
+  document.getElementById('tabla-p').innerHTML=(data||[]).map(p=>`<tr>
+    <td style="font-size:12px;color:var(--g600);">${fmtDate(p.created_at)}</td>
+    <td style="font-size:12px;">${p.j1?.nombre||'?'} / ${p.j2?.nombre||'?'}</td>
+    <td style="font-size:12px;">${p.j3?.nombre||'?'} / ${p.j4?.nombre||'?'}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px;">${p.set1_a||'?'}-${p.set1_b||'?'} / ${p.set2_a||'?'}-${p.set2_b||'?'}</td>
+    <td><span class="pill ${p.confirmado?'pg':'pa'}">${p.confirmado?'✓ Confirmado':'⏳ Pendiente'}</span></td>
+    <td>${!p.confirmado?`<button class="sbtn sbtn-g" onclick="confirmarP('${p.id}')">Confirmar</button>`:'—'}</td>
+  </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--g400);">No hay partidos</td></tr>';
+}
+
+async function confirmarP(id) { await supa.rpc('confirmar_partido',{partido_uuid:id}); loadAdminPartidos(); }
+
+async function loadAdminIngresos() {
+  const [inscRes,proRes]=await Promise.all([
+    supa.from('inscripciones').select('*,torneo:torneo_id(nombre),jugador:jugador1_id(nombre)').order('created_at',{ascending:false}).limit(15),
+    supa.from('suscripciones_pro').select('*').eq('activa',true),
+  ]);
+  const insc=inscRes.data||[],pro=proRes.data||[];
+  const fees=insc.reduce((s,i)=>s+(i.fee_mito||0),0),mrr=pro.reduce((s,p)=>s+(p.precio_mensual||0),0);
+  document.getElementById('kpi-ing').innerHTML=[
+    {label:'Fees de torneos',val:fmt$(fees),sub:'10% por inscripción',up:true},
+    {label:'MRR Mito Pro',val:fmt$(mrr),sub:pro.length+' suscriptores activos',up:true},
+    {label:'Total mensual',val:fmt$(fees+mrr),sub:'Ingresos combinados',up:true},
+  ].map(k=>`<div class="kpi"><div class="kpi-label">${k.label}</div><div class="kpi-val kpi-up">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+  document.getElementById('tabla-ing').innerHTML=insc.map(i=>`<tr>
+    <td style="font-size:12px;">${i.torneo?.nombre||'—'}</td>
+    <td style="font-size:12px;">${i.jugador?.nombre||'—'}</td>
+    <td style="font-family:'DM Mono',monospace;">${fmt$(i.precio_pagado||0)}</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--green-d);font-weight:600;">${fmt$(i.fee_mito||0)}</td>
+    <td style="font-size:11px;color:var(--g600);">${fmtDate(i.created_at)}</td>
+  </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--g400);">No hay inscripciones</td></tr>';
+}
+
+async function loadAdminClubes() {
+  const {data}=await supa.from('clubes').select('*').order('nombre');
+  document.getElementById('tabla-cl').innerHTML=(data||[]).map(c=>`<tr>
+    <td><div style="font-size:13px;font-weight:500;">${c.nombre}</div><div style="font-size:11px;color:var(--muted);">${c.direccion||''}</div></td>
+    <td style="font-size:12px;">${c.ciudad}</td>
+    <td><span class="pill pgr">${c.zona}</span></td>
+    <td style="font-family:'DM Mono',monospace;">${c.jugadores_activos||0}</td>
+    <td style="font-family:'DM Mono',monospace;">${c.torneos_realizados||0}</td>
+    <td><span class="pill ${c.plan==='pro'?'pp':c.plan==='club'?'pg':'pgr'}">${c.plan}</span></td>
+    <td><div style="display:flex;gap:5px;">
+      <button class="sbtn sbtn-gr" onclick="editClub('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}','${c.ciudad||''}','${c.zona||''}','${c.direccion||''}')">Editar</button>
+      <button class="sbtn sbtn-r" onclick="deleteClub('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}')">Eliminar</button>
+    </div></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--g400);">No hay clubes registrados. Creá el primero con "+ Nuevo club".</td></tr>';
+}
+
+function openNewClub() {
+  document.getElementById('m-nuevo-club').classList.add('show');
+}
+
+async function saveClub() {
+  const nombre = document.getElementById('nc-nombre').value.trim();
+  const ciudad = document.getElementById('nc-ciudad').value.trim();
+  const zona = document.getElementById('nc-zona').value;
+  const direccion = document.getElementById('nc-direccion').value.trim();
+  if (!nombre || !ciudad) { alert('Nombre y ciudad son obligatorios'); return; }
+  const { error } = await supa.from('clubes').insert({
+    nombre, ciudad, zona, direccion: direccion || null,
+    plan: 'gratis', torneos_realizados: 0, jugadores_activos: 0, activo: true
+  });
+  if (error) { alert('Error: ' + error.message); return; }
+  document.getElementById('m-nuevo-club').classList.remove('show');
+  ['nc-nombre','nc-ciudad','nc-direccion'].forEach(id => document.getElementById(id).value = '');
+  loadAdminClubes();
+}
+
+async function editClub(id, nombre, ciudad, zona, direccion) {
+  const nuevoNombre = prompt('Nombre del club:', nombre);
+  if (!nuevoNombre) return;
+  const nuevaCiudad = prompt('Ciudad:', ciudad);
+  if (!nuevaCiudad) return;
+  await supa.from('clubes').update({ nombre: nuevoNombre, ciudad: nuevaCiudad }).eq('id', id);
+  loadAdminClubes();
+}
+
+async function deleteClub(id, nombre) {
+  if (!confirm(`¿Eliminar el club "${nombre}"?`)) return;
+  await supa.from('clubes').delete().eq('id', id);
+  loadAdminClubes();
+}
+
+// ══════════════════════════════════════
+// CLOCK & INIT
+// ══════════════════════════════════════
+function tick(){const n=new Date();const el=document.getElementById('app-clock');if(el)el.textContent=n.getHours()+':'+(String(n.getMinutes()).padStart(2,'0'));}
+tick(); setInterval(tick,30000);
+
+(async()=>{
+  const {data:{session}}=await supa.auth.getSession();
+  if(session) { await afterLogin(session.user); }
+  supa.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session) await afterLogin(session.user);
+    if(event==='SIGNED_OUT') showView('login');
+  });
+})();
+</script>
+</body>
+</html>
