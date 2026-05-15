@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mito Rating — Pádel Argentino</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --negro: #0a0a0a;
+    --blanco: #f5f3ef;
+    --verde: #c8f55a;
+    --verde-oscuro: #8fb830;
+    --gris: #1a1a1a;
+    --gris-medio: #2a2a2a;
+    --gris-claro: #4a4a4a;
+    --texto-suave: #888;
+    --borde: #2a2a2a;
+    --error: #ff4d4d;
+    --exito: #c8f55a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--negro);
+    color: var(--blanco);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── FONDO ANIMADO ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(200,245,90,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,245,90,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .bg-blob {
+    position: fixed; z-index: 0; pointer-events: none;
+    border-radius: 50%; filter: blur(120px); opacity: 0.15;
+  }
+  .bg-blob-1 { width: 600px; height: 600px; background: var(--verde); top: -200px; right: -200px; }
+  .bg-blob-2 { width: 400px; height: 400px; background: #4af; bottom: -100px; left: -100px; }
+
+  /* ── CONTENEDOR PRINCIPAL ── */
+  .app {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ── PANTALLAS ── */
+  .screen { display: none; width: 100%; max-width: 460px; }
+  .screen.active { display: block; animation: slideUp .35s ease; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: rgba(20,20,20,0.92);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+  }
+
+  /* ── LOGO ── */
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: var(--verde);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 24px; height: 24px; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; }
+  .logo-sub { font-size: 11px; color: var(--texto-suave); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ── TÍTULOS ── */
+  h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--texto-suave); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+
+  /* ── FORMULARIOS ── */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--texto-suave); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%; padding: 12px 14px;
+    background: var(--gris); border: 1px solid var(--borde);
+    border-radius: 10px; color: var(--blanco);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color .2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--verde);
+  }
+  .field input::placeholder { color: var(--gris-claro); }
+  .field select option { background: var(--gris); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-error { font-size: 11px; color: var(--error); margin-top: 4px; display: none; }
+  .field-error.show { display: block; }
+
+  /* ── BOTONES ── */
+  .btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-primary {
+    background: var(--verde); color: var(--negro);
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--verde-oscuro); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: transparent; color: var(--blanco);
+    border: 1px solid var(--borde); margin-top: 10px;
+  }
+  .btn-secondary:hover { border-color: var(--verde); color: var(--verde); }
+  .btn-google {
+    background: var(--gris); color: var(--blanco);
+    border: 1px solid var(--borde);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .btn-google:hover { border-color: #888; }
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ── DIVISOR ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 16px 0; color: var(--texto-suave); font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--borde);
+  }
+
+  /* ── LINKS ── */
+  .link {
+    background: none; border: none; color: var(--verde);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; text-decoration: none;
+  }
+  .link:hover { text-decoration: underline; }
+  .text-center { text-align: center; margin-top: 20px; font-size: 13px; color: var(--texto-suave); }
+
+  /* ── SELECCIÓN DE ROL ── */
+  .roles-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 20px;
+  }
+  .role-card {
+    border: 1px solid var(--borde); border-radius: 12px;
+    padding: 16px 12px; text-align: center;
+    cursor: pointer; transition: all .2s; background: var(--gris);
+  }
+  .role-card:hover { border-color: var(--verde); }
+  .role-card.selected { border-color: var(--verde); background: rgba(200,245,90,0.08); }
+  .role-card .role-icon { font-size: 26px; margin-bottom: 8px; }
+  .role-card .role-name {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--blanco);
+  }
+  .role-card .role-desc { font-size: 11px; color: var(--texto-suave); margin-top: 3px; }
+  .role-card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* ── PASOS ── */
+  .steps {
+    display: flex; gap: 6px; margin-bottom: 24px;
+  }
+  .step-dot {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: var(--borde); transition: background .3s;
+  }
+  .step-dot.done { background: var(--verde-oscuro); }
+  .step-dot.active { background: var(--verde); }
+
+  /* ── BADGE DE ROL ── */
+  .rol-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; margin-bottom: 20px;
+  }
+  .rol-badge.jugador { background: rgba(200,245,90,0.12); color: var(--verde); border: 1px solid rgba(200,245,90,0.25); }
+  .rol-badge.club { background: rgba(100,180,255,0.12); color: #64b4ff; border: 1px solid rgba(100,180,255,0.25); }
+  .rol-badge.organizador { background: rgba(255,180,50,0.12); color: #ffb432; border: 1px solid rgba(255,180,50,0.25); }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--texto-suave);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; margin-bottom: 20px; padding: 0;
+    transition: color .2s;
+  }
+  .back-btn:hover { color: var(--blanco); }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  /* ── ALERTA ── */
+  .alert {
+    padding: 12px 14px; border-radius: 10px;
+    font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .alert.show { display: block; }
+  .alert-error { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3); color: #ff8080; }
+  .alert-success { background: rgba(200,245,90,0.1); border: 1px solid rgba(200,245,90,0.3); color: var(--verde); }
+
+  /* ── LOADING ── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: var(--negro);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PANTALLA DE ÉXITO ── */
+  .success-icon {
+    width: 64px; height: 64px;
+    background: rgba(200,245,90,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+  }
+
+  /* ── PANELES PLACEHOLDER ── */
+  .panel-placeholder {
+    text-align: center; padding: 40px 0;
+  }
+  .panel-placeholder .panel-emoji { font-size: 48px; margin-bottom: 16px; }
+  .panel-placeholder h2 { margin-bottom: 8px; }
+  .panel-placeholder p { color: var(--texto-suave); font-size: 14px; margin-bottom: 24px; }
+  .panel-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--borde);
+  }
+  .panel-nav .nav-user { font-size: 13px; color: var(--texto-suave); }
+  .panel-nav .nav-rating {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    color: var(--verde);
+  }
+  .panel-nav .nav-rating span { font-size: 12px; color: var(--texto-suave); font-family: 'DM Sans', sans-serif; font-weight: 400; display: block; }
+
+  /* ── SCROLL ── */
+  .overflow-scroll { max-height: 85vh; overflow-y: auto; }
+  .overflow-scroll::-webkit-scrollbar { width: 4px; }
+  .overflow-scroll::-webkit-scrollbar-track { background: transparent; }
+  .overflow-scroll::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 2px; }
+
+  /* ── NOTA PROVISIONAL ── */
+  .provisional-badge {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    background: rgba(255,180,50,0.15); color: #ffb432;
+    border-radius: 10px; border: 1px solid rgba(255,180,50,0.3);
+    margin-left: 6px; vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 1: INICIO
+  ═══════════════════════════════════════════ -->
+  <div class="screen active" id="s-inicio">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+            <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">Mito Rating</div>
+          <div class="logo-sub">Pádel Argentino</div>
+        </div>
+      </div>
+
+      <h1>Tu nivel real,<br>en un número.</h1>
+      <p class="subtitle">El sistema de rating que ordena el pádel argentino. Sin auto-declaraciones. Sin trampas.</p>
+
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continuar con Google
+      </button>
+
+      <div class="divider">o</div>
+
+      <button class="btn btn-primary" onclick="ir('s-login')">Ingresar con email</button>
+      <div class="text-center">
+        ¿No tenés cuenta? <button class="link" onclick="ir('s-elegir-rol')">Registrarse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 2: LOGIN
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-login">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-inicio')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+            <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <div><div class="logo-text">Mito Rating</div></div>
+      </div>
+
+      <h2>Ingresá a tu cuenta</h2>
+      <p class="subtitle">Accedé a tu panel según tu perfil.</p>
+
+      <div class="alert alert-error" id="alert-login"></div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Ingresar</button>
+      <button class="btn btn-secondary" onclick="ir('s-recuperar')">Olvidé mi contraseña</button>
+
+      <div class="text-center">
+        ¿No tenés cuenta? <button class="link" onclick="ir('s-elegir-rol')">Registrarse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 3: RECUPERAR CONTRASEÑA
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-recuperar">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-login')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver al login
+      </button>
+      <h2>Recuperar contraseña</h2>
+      <p class="subtitle">Te enviamos un enlace para restablecer tu contraseña. Válido por 30 minutos.</p>
+
+      <div class="alert alert-error" id="alert-recuperar"></div>
+      <div class="alert alert-success" id="alert-recuperar-ok"></div>
+
+      <div class="field">
+        <label>Email de tu cuenta</label>
+        <input type="email" id="recuperar-email" placeholder="tu@email.com">
+      </div>
+      <button class="btn btn-primary" id="btn-recuperar" onclick="doRecuperar()">Enviar enlace</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 4: ELEGIR ROL
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-elegir-rol">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-inicio')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <h2>Crear cuenta</h2>
+      <p class="subtitle">¿Cómo vas a usar Mito Rating? Tu elección define tu panel y es permanente.</p>
+
+      <div class="roles-grid">
+        <div class="role-card" id="rc-jugador" onclick="seleccionarRol('jugador')">
+          <div class="role-icon">🎾</div>
+          <div class="role-name">Jugador</div>
+          <div class="role-desc">Jugar y competir</div>
+        </div>
+        <div class="role-card" id="rc-club" onclick="seleccionarRol('club')">
+          <div class="role-icon">🏟️</div>
+          <div class="role-name">Club</div>
+          <div class="role-desc">Gestionar mi club</div>
+        </div>
+        <div class="role-card" id="rc-organizador" onclick="seleccionarRol('organizador')">
+          <div class="role-icon">🏆</div>
+          <div class="role-name">Organizador</div>
+          <div class="role-desc">Crear torneos</div>
+        </div>
+        <div class="role-card disabled">
+          <div class="role-icon">🛡️</div>
+          <div class="role-name">Admin</div>
+          <div class="role-desc">Solo por invitación</div>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--texto-suave);text-align:center;margin-bottom:16px;">
+        ℹ️ El rol Admin se asigna manualmente por Seba. Si te equivocás de perfil, solo el admin puede corregirlo.
+      </p>
+
+      <button class="btn btn-primary" id="btn-continuar-rol" onclick="continuarRol()" style="opacity:.4;pointer-events:none">
+        Continuar
+      </button>
+      <div class="text-center">
+        ¿Ya tenés cuenta? <button class="link" onclick="ir('s-login')">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 5A: REGISTRO JUGADOR — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-jugador-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge jugador">🎾 Jugador</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-jug1"></div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="jug-nombre" placeholder="Juan Pérez">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="jug-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="jug-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="jug-pass2" placeholder="Repetir contraseña">
+      </div>
+      <button class="btn btn-primary" onclick="jugPaso1()">Siguiente →</button>
+
+      <div class="divider" style="margin-top:16px">o registrate con</div>
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Google
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 5B: REGISTRO JUGADOR — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-jugador-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-jugador-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge jugador">🎾 Jugador</span>
+      <h2>Tu perfil de juego</h2>
+      <p class="subtitle">Paso 2 de 2 — Esta info define tu Rating MTO inicial y en qué ranking aparecés.</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-jug2"></div>
+
+      <div class="field">
+        <label>Género</label>
+        <select id="jug-genero">
+          <option value="">Seleccioná tu género</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Categoría aproximada</label>
+        <select id="jug-categoria">
+          <option value="">¿En qué categoría jugás?</option>
+          <option value="sin_categoria">Sin categoría / soy nuevo</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Rol en cancha</label>
+        <select id="jug-rol">
+          <option value="">Seleccioná tu posición</option>
+          <option value="derecha">Derecha (55% del cambio de rating)</option>
+          <option value="reves">Revés (45% del cambio de rating)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="jug-provincia" onchange="cargarCiudades('jug-provincia','jug-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="jug-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-reg-jugador" onclick="doRegistroJugador()">Crear mi cuenta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 6A: REGISTRO CLUB — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-club-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge club">🏟️ Club</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-club1"></div>
+
+      <div class="field">
+        <label>Nombre del club</label>
+        <input type="text" id="club-nombre" placeholder="Club Palermo Pádel">
+      </div>
+      <div class="field">
+        <label>Email institucional</label>
+        <input type="email" id="club-email" placeholder="info@miclub.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="club-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Nombre del responsable</label>
+        <input type="text" id="club-responsable" placeholder="Nombre y apellido">
+      </div>
+      <button class="btn btn-primary" onclick="clubPaso1()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 6B: REGISTRO CLUB — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-club-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-club-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge club">🏟️ Club</span>
+      <h2>Datos del club</h2>
+      <p class="subtitle">Paso 2 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-club2"></div>
+
+      <div class="field">
+        <label>Teléfono de contacto</label>
+        <input type="tel" id="club-telefono" placeholder="+54 11 0000-0000">
+      </div>
+      <div class="field">
+        <label>Dirección física</label>
+        <input type="text" id="club-direccion" placeholder="Av. Corrientes 1234">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="club-provincia" onchange="cargarCiudades('club-provincia','club-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="club-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-reg-club" onclick="doRegistroClub()">Crear cuenta de club</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 7A: REGISTRO ORGANIZADOR — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-org-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge organizador">🏆 Organizador</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-org1"></div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="org-nombre" placeholder="Nombre y apellido">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="org-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="org-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Tipo de organizador</label>
+        <select id="org-tipo">
+          <option value="">Seleccioná tu tipo</option>
+          <option value="independiente">Independiente</option>
+          <option value="representante_club">Representante de club</option>
+          <option value="federacion">Federación o asociación</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="orgPaso1()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 7B: REGISTRO ORGANIZADOR — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-org-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-org-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge organizador">🏆 Organizador</span>
+      <h2>Datos de contacto</h2>
+      <p class="subtitle">Paso 2 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-org2"></div>
+
+      <div class="field">
+        <label>Teléfono de contacto</label>
+        <input type="tel" id="org-telefono" placeholder="+54 11 0000-0000">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="org-provincia" onchange="cargarCiudades('org-provincia','org-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="org-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-reg-org" onclick="doRegistroOrg()">Crear cuenta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 8: COMPLETA PERFIL GOOGLE (JUGADOR)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-google-jugador">
+    <div class="card overflow-scroll">
+      <span class="rol-badge jugador">🎾 Jugador — Google</span>
+      <h2>Completá tu perfil</h2>
+      <p class="subtitle">Una sola vez. Esta info define tu Rating MTO inicial y en qué ranking aparecés.</p>
+
+      <div class="alert alert-error" id="alert-gjug"></div>
+
+      <div class="field">
+        <label>Género</label>
+        <select id="gjug-genero">
+          <option value="">Seleccioná tu género</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Categoría aproximada</label>
+        <select id="gjug-categoria">
+          <option value="">¿En qué categoría jugás?</option>
+          <option value="sin_categoria">Sin categoría / soy nuevo</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Rol en cancha</label>
+        <select id="gjug-rol">
+          <option value="">Seleccioná tu posición</option>
+          <option value="derecha">Derecha</option>
+          <option value="reves">Revés</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="gjug-provincia" onchange="cargarCiudades('gjug-provincia','gjug-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="gjug-ciudad"><option value="">Ciudad</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-gjug" onclick="completarPerfilGoogle()">Guardar y entrar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 9: ÉXITO JUGADOR
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-jugador">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🎾</div>
+      <h2>¡Cuenta creada!</h2>
+      <span class="rol-badge jugador" style="margin:12px auto 16px;display:inline-flex">🎾 Jugador</span>
+      <p id="ok-jugador-rating" style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800;color:var(--verde);margin:8px 0"></p>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:8px" id="ok-jugador-cat"></p>
+      <p style="color:var(--texto-suave);font-size:12px;margin-bottom:24px">
+        <span class="provisional-badge">provisional</span> Tu rating real se construye con partidos confirmados.
+      </p>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Revisá tu email para verificar tu cuenta.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 10: ÉXITO CLUB
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-club">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🏟️</div>
+      <h2>¡Club registrado!</h2>
+      <span class="rol-badge club" style="margin:12px auto 16px;display:inline-flex">🏟️ Club</span>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Tu cuenta está activa. Revisá tu email para verificarla y accedé a tu panel de club.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 11: ÉXITO ORGANIZADOR
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-org">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🏆</div>
+      <h2>¡Cuenta creada!</h2>
+      <span class="rol-badge organizador" style="margin:12px auto 16px;display:inline-flex">🏆 Organizador</span>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Tu cuenta está activa. Podés empezar a crear torneos desde tu panel.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 12: PANEL JUGADOR (placeholder)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-jugador">
+    <div class="card">
+      <div class="panel-nav">
+        <div>
+          <div class="nav-user" id="panel-jug-nombre">—</div>
+          <div style="font-size:11px;color:var(--texto-suave)" id="panel-jug-cat">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="nav-rating" id="panel-jug-rating">—<span>Rating MTO</span></div>
+        </div>
+      </div>
+      <div class="panel-placeholder">
+        <div class="panel-emoji">🎾</div>
+        <h2>Panel del Jugador</h2>
+        <p>Próximamente: ranking, partidos, torneos, historial de rating MTO y más.</p>
+        <button class="btn btn-secondary" onclick="doLogout()" style="max-width:200px;margin:0 auto">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 13: PANEL CLUB (placeholder)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-club">
+    <div class="card">
+      <div class="panel-nav">
+        <div>
+          <div class="nav-user" id="panel-club-nombre">—</div>
+          <div style="font-size:11px;color:var(--texto-suave)">Panel de Club</div>
+        </div>
+        <div style="font-size:22px">🏟️</div>
+      </div>
+      <div class="panel-placeholder">
+        <div class="panel-emoji">🏟️</div>
+        <h2>Panel del Club</h2>
+        <p>Próximamente: jugadores miembros, torneos, drops, estadísticas y más.</p>
+        <button class="btn btn-secondary" onclick="doLogout()" style="max-width:200px;margin:0 auto">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 14: PANEL ORGANIZADOR (placeholder)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-org">
+    <div class="card">
+      <div class="panel-nav">
+        <div>
+          <div class="nav-user" id="panel-org-nombre">—</div>
+          <div style="font-size:11px;color:var(--texto-suave)">Panel de Organizador</div>
+        </div>
+        <div style="font-size:22px">🏆</div>
+      </div>
+      <div class="panel-placeholder">
+        <div class="panel-emoji">🏆</div>
+        <h2>Panel del Organizador</h2>
+        <p>Próximamente: crear torneos, drops, inscriptos y más.</p>
+        <button class="btn btn-secondary" onclick="doLogout()" style="max-width:200px;margin:0 auto">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 15: PANEL ADMIN (placeholder)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-admin">
+    <div class="card">
+      <div class="panel-nav">
+        <div>
+          <div class="nav-user">Administrador</div>
+          <div style="font-size:11px;color:var(--verde)">Acceso total</div>
+        </div>
+        <div style="font-size:22px">🛡️</div>
+      </div>
+      <div class="panel-placeholder">
+        <div class="panel-emoji">🛡️</div>
+        <h2>Panel de Administración</h2>
+        <p>Próximamente: dashboard KPIs, jugadores, clubes, torneos, drops y más.</p>
+        <button class="btn btn-secondary" onclick="doLogout()" style="max-width:200px;margin:0 auto">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- fin .app -->
+
+<script>
+// ════════════════════════════════════════════
+// CONFIGURACIÓN SUPABASE
+// ════════════════════════════════════════════
+const SUPABASE_URL  = 'https://zvgpdvjosjtkqqidykdf.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z3Bkdmpvc2p0a3FxaWR5a2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTExODMsImV4cCI6MjA5NDEyNzE4M30.D6Q_z_NO_dPkD0uwiEINhpIi9AU9X-lqquMCULsp37k';
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const ADMIN_EMAILS = ['vranjican22@gmail.com', 'info@mitodeportes.com.ar'];
+
+// Rating MTO inicial por categoría
+const RATING_INICIAL = {
+  'sin_categoria': 1.0,
+  '8va': 2.0,
+  '7ma': 3.0,
+  '6ta': 4.0,
+  '5ta': 5.0,
+  '4ta': 6.0,
+  '3ra': 7.0,
+  '2da': 8.0,
+  '1ra': 9.0
+};
+
+// ════════════════════════════════════════════
+// DATOS DE PROVINCIAS Y CIUDADES
+// ════════════════════════════════════════════
+const PROV_CIUDADES = {
+  'Buenos Aires': ['La Plata','Mar del Plata','Quilmes','Lomas de Zamora','San Isidro','Tigre','Morón','Lanús','Almirante Brown','Berazategui','Florencio Varela'],
+  'CABA': ['Palermo','Belgrano','Caballito','Villa Crespo','Recoleta','San Telmo','Núñez','Colegiales','Almagro','Boedo','Flores'],
+  'Córdoba': ['Córdoba Capital','Villa Carlos Paz','Río Cuarto','Alta Gracia','Villa María','San Francisco','Cosquín'],
+  'Santa Fe': ['Rosario','Santa Fe Capital','Rafaela','Venado Tuerto','Reconquista','Villa Constitución'],
+  'Mendoza': ['Mendoza Capital','San Rafael','Godoy Cruz','Luján de Cuyo','Maipú'],
+  'Tucumán': ['San Miguel de Tucumán','Tafí Viejo','Banda del Río Salí','Yerba Buena'],
+  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Concepción del Uruguay'],
+  'Salta': ['Salta Capital','San Ramón de la Nueva Orán','Tartagal'],
+  'Misiones': ['Posadas','Oberá','Eldorado'],
+  'Chaco': ['Resistencia','Presidencia Roque Sáenz Peña'],
+  'San Juan': ['San Juan Capital','Rawson','Rivadavia'],
+  'Neuquén': ['Neuquén Capital','San Martín de los Andes','Zapala'],
+  'Río Negro': ['Viedma','Bariloche','General Roca','Cipolletti'],
+  'Formosa': ['Formosa Capital','Clorinda'],
+  'San Luis': ['San Luis Capital','Villa Mercedes'],
+  'Catamarca': ['San Fernando del Valle de Catamarca'],
+  'La Rioja': ['La Rioja Capital'],
+  'Jujuy': ['San Salvador de Jujuy','Palpalá'],
+  'La Pampa': ['Santa Rosa','General Pico'],
+  'Chubut': ['Rawson','Comodoro Rivadavia','Trelew','Puerto Madryn'],
+  'Santa Cruz': ['Río Gallegos','Caleta Olivia'],
+  'Tierra del Fuego': ['Ushuaia','Río Grande'],
+  'Santiago del Estero': ['Santiago del Estero Capital','La Banda'],
+  'Corrientes': ['Corrientes Capital','Goya']
+};
+
+// ════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════
+let rolSeleccionado = null;
+let datosJugadorTemp = {};
+let datosClubTemp = {};
+let datosOrgTemp = {};
+let usuarioGooglePendiente = null;
+
+// ════════════════════════════════════════════
+// NAVEGACIÓN
+// ════════════════════════════════════════════
+function ir(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function mostrarAlerta(id, msg, tipo = 'error') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert alert-${tipo} show`;
+}
+
+function ocultarAlerta(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+function setBtnLoading(id, loading, texto = 'Procesando...') {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span>${texto}`;
+  } else {
+    btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════════
+// CARGAR PROVINCIAS Y CIUDADES
+// ════════════════════════════════════════════
+function inicializarProvincias() {
+  const provIds = ['jug-provincia','club-provincia','org-provincia','gjug-provincia'];
+  provIds.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    Object.keys(PROV_CIUDADES).sort().forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function cargarCiudades(provId, ciudadId) {
+  const prov = document.getElementById(provId)?.value;
+  const sel = document.getElementById(ciudadId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Ciudad</option>';
+  if (!prov || !PROV_CIUDADES[prov]) return;
+  PROV_CIUDADES[prov].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+// ════════════════════════════════════════════
+// SELECCIÓN DE ROL
+// ════════════════════════════════════════════
+function seleccionarRol(rol) {
+  rolSeleccionado = rol;
+  document.querySelectorAll('.role-card:not(.disabled)').forEach(c => c.classList.remove('selected'));
+  document.getElementById('rc-' + rol).classList.add('selected');
+  const btn = document.getElementById('btn-continuar-rol');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+}
+
+function continuarRol() {
+  if (!rolSeleccionado) return;
+  const destino = { jugador: 's-reg-jugador-1', club: 's-reg-club-1', organizador: 's-reg-org-1' };
+  ir(destino[rolSeleccionado]);
+}
+
+// ════════════════════════════════════════════
+// REGISTRO JUGADOR
+// ════════════════════════════════════════════
+function jugPaso1() {
+  ocultarAlerta('alert-jug1');
+  const nombre = document.getElementById('jug-nombre').value.trim();
+  const email  = document.getElementById('jug-email').value.trim();
+  const pass   = document.getElementById('jug-pass').value;
+  const pass2  = document.getElementById('jug-pass2').value;
+
+  if (!nombre) return mostrarAlerta('alert-jug1', 'El nombre es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-jug1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-jug1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (pass !== pass2) return mostrarAlerta('alert-jug1', 'Las contraseñas no coinciden.');
+
+  datosJugadorTemp = { nombre, email, pass };
+  ir('s-reg-jugador-2');
+}
+
+async function doRegistroJugador() {
+  ocultarAlerta('alert-jug2');
+  const genero    = document.getElementById('jug-genero').value;
+  const categoria = document.getElementById('jug-categoria').value;
+  const rol       = document.getElementById('jug-rol').value;
+  const provincia = document.getElementById('jug-provincia').value;
+  const ciudad    = document.getElementById('jug-ciudad').value;
+
+  if (!genero)    return mostrarAlerta('alert-jug2', 'Seleccioná tu género.');
+  if (!categoria) return mostrarAlerta('alert-jug2', 'Seleccioná tu categoría aproximada.');
+  if (!rol)       return mostrarAlerta('alert-jug2', 'Seleccioná tu rol en cancha.');
+  if (!provincia) return mostrarAlerta('alert-jug2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-jug2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-jugador', true, 'Creando cuenta...');
+
+  const rating_inicial = RATING_INICIAL[categoria];
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosJugadorTemp.email,
+    password: datosJugadorTemp.pass,
+    options: { data: { nombre: datosJugadorTemp.nombre } }
+  });
+
+  if (error) {
+    const btn = document.getElementById('btn-reg-jugador');
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Crear mi cuenta'; }
+    const msg = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-jug2', msg);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    await _sb.from('jugadores').insert({
+      id: userId,
+      nombre: datosJugadorTemp.nombre,
+      email: datosJugadorTemp.email,
+      perfil: 'jugador',
+      genero,
+      categoria_aproximada: categoria,
+      categoria_habilitada: categoria,
+      rol_cancha: rol,
+      provincia,
+      ciudad,
+      rating_mto: rating_inicial,
+      rating_inicial,
+      rating_provisional: true,
+      verificado: false,
+      es_pro: false,
+      partidos_jugados: 0,
+      partidos_ganados: 0
+    });
+  }
+
+  setBtnLoading('btn-reg-jugador', false);
+
+  // Mostrar pantalla de éxito
+  document.getElementById('ok-jugador-rating').textContent = `MTO ${rating_inicial.toFixed(1)}`;
+  document.getElementById('ok-jugador-cat').textContent = `${categoria === 'sin_categoria' ? 'Sin categoría' : categoria + ' categoría'} · ${genero}`;
+  ir('s-ok-jugador');
+}
+
+// ════════════════════════════════════════════
+// REGISTRO CLUB
+// ════════════════════════════════════════════
+function clubPaso1() {
+  ocultarAlerta('alert-club1');
+  const nombre      = document.getElementById('club-nombre').value.trim();
+  const email       = document.getElementById('club-email').value.trim();
+  const pass        = document.getElementById('club-pass').value;
+  const responsable = document.getElementById('club-responsable').value.trim();
+
+  if (!nombre)      return mostrarAlerta('alert-club1', 'El nombre del club es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-club1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-club1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (!responsable) return mostrarAlerta('alert-club1', 'El nombre del responsable es obligatorio.');
+
+  datosClubTemp = { nombre, email, pass, responsable };
+  ir('s-reg-club-2');
+}
+
+async function doRegistroClub() {
+  ocultarAlerta('alert-club2');
+  const telefono  = document.getElementById('club-telefono').value.trim();
+  const direccion = document.getElementById('club-direccion').value.trim();
+  const provincia = document.getElementById('club-provincia').value;
+  const ciudad    = document.getElementById('club-ciudad').value;
+
+  if (!telefono)  return mostrarAlerta('alert-club2', 'El teléfono es obligatorio.');
+  if (!direccion) return mostrarAlerta('alert-club2', 'La dirección es obligatoria.');
+  if (!provincia) return mostrarAlerta('alert-club2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-club2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-club', true, 'Creando cuenta...');
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosClubTemp.email,
+    password: datosClubTemp.pass,
+    options: { data: { nombre: datosClubTemp.nombre } }
+  });
+
+  if (error) {
+    const btn2 = document.getElementById('btn-reg-club');
+    if (btn2) { btn2.disabled = false; btn2.innerHTML = 'Crear cuenta de club'; }
+    const msg2 = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-club2', msg2);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    await _sb.from('clubes').insert({
+      id: userId,
+      nombre: datosClubTemp.nombre,
+      email: datosClubTemp.email,
+      perfil: 'club',
+      nombre_responsable: datosClubTemp.responsable,
+      telefono,
+      direccion,
+      provincia,
+      ciudad,
+      verificado: false
+    });
+  }
+
+  setBtnLoading('btn-reg-club', false);
+  ir('s-ok-club');
+}
+
+// ════════════════════════════════════════════
+// REGISTRO ORGANIZADOR
+// ════════════════════════════════════════════
+function orgPaso1() {
+  ocultarAlerta('alert-org1');
+  const nombre = document.getElementById('org-nombre').value.trim();
+  const email  = document.getElementById('org-email').value.trim();
+  const pass   = document.getElementById('org-pass').value;
+  const tipo   = document.getElementById('org-tipo').value;
+
+  if (!nombre) return mostrarAlerta('alert-org1', 'El nombre es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-org1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-org1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (!tipo)   return mostrarAlerta('alert-org1', 'Seleccioná tu tipo de organizador.');
+
+  datosOrgTemp = { nombre, email, pass, tipo };
+  ir('s-reg-org-2');
+}
+
+async function doRegistroOrg() {
+  ocultarAlerta('alert-org2');
+  const telefono = document.getElementById('org-telefono').value.trim();
+  const provincia = document.getElementById('org-provincia').value;
+  const ciudad    = document.getElementById('org-ciudad').value;
+
+  if (!telefono)  return mostrarAlerta('alert-org2', 'El teléfono es obligatorio.');
+  if (!provincia) return mostrarAlerta('alert-org2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-org2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-org', true, 'Creando cuenta...');
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosOrgTemp.email,
+    password: datosOrgTemp.pass,
+    options: { data: { nombre: datosOrgTemp.nombre } }
+  });
+
+  if (error) {
+    const btn3 = document.getElementById('btn-reg-org');
+    if (btn3) { btn3.disabled = false; btn3.innerHTML = 'Crear cuenta'; }
+    const msg3 = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-org2', msg3);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    await _sb.from('organizadores').insert({
+      id: userId,
+      nombre: datosOrgTemp.nombre,
+      email: datosOrgTemp.email,
+      perfil: 'organizador',
+      tipo_organizador: datosOrgTemp.tipo,
+      telefono,
+      provincia,
+      ciudad,
+      verificado: false
+    });
+  }
+
+  setBtnLoading('btn-reg-org', false);
+  ir('s-ok-org');
+}
+
+// ════════════════════════════════════════════
+// LOGIN CON EMAIL
+// ════════════════════════════════════════════
+async function doLogin() {
+  ocultarAlerta('alert-login');
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+
+  if (!email) return mostrarAlerta('alert-login', 'Ingresá tu email.');
+  if (!pass)  return mostrarAlerta('alert-login', 'Ingresá tu contraseña.');
+
+  setBtnLoading('btn-login', true, 'Ingresando...');
+
+  const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
+
+  setBtnLoading('btn-login', false);
+
+  if (error) {
+    return mostrarAlerta('alert-login', 'Email o contraseña incorrectos.');
+  }
+
+  await redirigirSegunPerfil(data.user);
+}
+
+// ════════════════════════════════════════════
+// LOGIN CON GOOGLE
+// ════════════════════════════════════════════
+async function loginGoogle() {
+  const { error } = await _sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) alert('Error al conectar con Google: ' + error.message);
+}
+
+// ════════════════════════════════════════════
+// COMPLETAR PERFIL GOOGLE (JUGADOR)
+// ════════════════════════════════════════════
+async function completarPerfilGoogle() {
+  ocultarAlerta('alert-gjug');
+  const genero    = document.getElementById('gjug-genero').value;
+  const categoria = document.getElementById('gjug-categoria').value;
+  const rol       = document.getElementById('gjug-rol').value;
+  const provincia = document.getElementById('gjug-provincia').value;
+  const ciudad    = document.getElementById('gjug-ciudad').value;
+
+  if (!genero)    return mostrarAlerta('alert-gjug', 'Seleccioná tu género.');
+  if (!categoria) return mostrarAlerta('alert-gjug', 'Seleccioná tu categoría.');
+  if (!rol)       return mostrarAlerta('alert-gjug', 'Seleccioná tu rol en cancha.');
+  if (!provincia) return mostrarAlerta('alert-gjug', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-gjug', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-gjug', true, 'Guardando...');
+
+  const user = usuarioGooglePendiente;
+  const rating_inicial = RATING_INICIAL[categoria];
+
+  await _sb.from('jugadores').insert({
+    id: user.id,
+    nombre: user.user_metadata?.full_name || user.email,
+    email: user.email,
+    perfil: 'jugador',
+    genero,
+    categoria_aproximada: categoria,
+    categoria_habilitada: categoria,
+    rol_cancha: rol,
+    provincia,
+    ciudad,
+    rating_mto: rating_inicial,
+    rating_inicial,
+    rating_provisional: true,
+    verificado: false,
+    es_pro: false,
+    partidos_jugados: 0,
+    partidos_ganados: 0
+  });
+
+  setBtnLoading('btn-gjug', false);
+  document.getElementById('ok-jugador-rating').textContent = `MTO ${rating_inicial.toFixed(1)}`;
+  document.getElementById('ok-jugador-cat').textContent = `${categoria === 'sin_categoria' ? 'Sin categoría' : categoria + ' categoría'} · ${genero}`;
+  ir('s-ok-jugador');
+}
+
+// ════════════════════════════════════════════
+// RECUPERAR CONTRASEÑA
+// ════════════════════════════════════════════
+async function doRecuperar() {
+  ocultarAlerta('alert-recuperar');
+  ocultarAlerta('alert-recuperar-ok');
+  const email = document.getElementById('recuperar-email').value.trim();
+  if (!email) return mostrarAlerta('alert-recuperar', 'Ingresá tu email.');
+
+  setBtnLoading('btn-recuperar', true, 'Enviando...');
+
+  const { error } = await _sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+
+  setBtnLoading('btn-recuperar', false);
+
+  if (error) return mostrarAlerta('alert-recuperar', error.message);
+  mostrarAlerta('alert-recuperar-ok', '✓ Revisá tu email. Te enviamos el enlace para restablecer tu contraseña.', 'success');
+  document.getElementById('btn-recuperar').textContent = 'Reenviar enlace';
+}
+
+// ════════════════════════════════════════════
+// REDIRECCIÓN SEGÚN PERFIL
+// ════════════════════════════════════════════
+async function redirigirSegunPerfil(user) {
+  if (!user) return ir('s-inicio');
+
+  // Admin por email hardcodeado (migrar a Supabase en futura versión)
+  if (ADMIN_EMAILS.includes(user.email)) {
+    return ir('s-panel-admin');
+  }
+
+  // Buscar en tabla jugadores
+  const { data: jugador } = await _sb
+    .from('jugadores').select('*').eq('id', user.id).single();
+
+  if (jugador) {
+    document.getElementById('panel-jug-nombre').textContent = jugador.nombre || user.email;
+    document.getElementById('panel-jug-cat').textContent =
+      `${jugador.categoria_habilitada || '—'} · ${jugador.genero || '—'}`;
+    document.getElementById('panel-jug-rating').innerHTML =
+      `${(jugador.rating_mto || 0).toFixed(1)}${jugador.rating_provisional ? '<span class="provisional-badge">provisional</span>' : ''}<span>Rating MTO</span>`;
+    return ir('s-panel-jugador');
+  }
+
+  // Buscar en tabla clubes
+  const { data: club } = await _sb
+    .from('clubes').select('*').eq('id', user.id).single();
+
+  if (club) {
+    document.getElementById('panel-club-nombre').textContent = club.nombre || user.email;
+    return ir('s-panel-club');
+  }
+
+  // Buscar en tabla organizadores
+  const { data: org } = await _sb
+    .from('organizadores').select('*').eq('id', user.id).single();
+
+  if (org) {
+    document.getElementById('panel-org-nombre').textContent = org.nombre || user.email;
+    return ir('s-panel-org');
+  }
+
+  // Usuario Google nuevo sin perfil — mostrar selector
+  usuarioGooglePendiente = user;
+  ir('s-elegir-rol');
+}
+
+function irAlPanel() {
+  _sb.auth.getUser().then(({ data }) => {
+    if (data?.user) redirigirSegunPerfil(data.user);
+    else ir('s-inicio');
+  });
+}
+
+// ════════════════════════════════════════════
+// LOGOUT
+// ════════════════════════════════════════════
+async function doLogout() {
+  await _sb.auth.signOut();
+  rolSeleccionado = null;
+  datosJugadorTemp = {};
+  datosClubTemp = {};
+  datosOrgTemp = {};
+  usuarioGooglePendiente = null;
+  ir('s-inicio');
+}
+
+// ════════════════════════════════════════════
+// INIT — verificar sesión activa al cargar
+// ════════════════════════════════════════════
+async function init() {
+  inicializarProvincias();
+
+  const { data: { session } } = await _sb.auth.getSession();
+
+  if (session?.user) {
+    await redirigirSegunPerfil(session.user);
+    return;
+  }
+
+  // Escuchar cambios de auth (Google callback)
+  _sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      await redirigirSegunPerfil(session.user);
+    }
+  });
+
+  ir('s-inicio');
+}
+
+init();
+</script>
+</body>
+</html>
