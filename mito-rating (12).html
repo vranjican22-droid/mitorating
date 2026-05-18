@@ -1,0 +1,4329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mito Rating — Pádel Argentino</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --negro: #0a0a0a;
+    --blanco: #f5f3ef;
+    --verde: #c8f55a;
+    --verde-oscuro: #8fb830;
+    --gris: #1a1a1a;
+    --gris-medio: #2a2a2a;
+    --gris-claro: #4a4a4a;
+    --texto-suave: #888;
+    --borde: #2a2a2a;
+    --error: #ff4d4d;
+    --exito: #c8f55a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--negro);
+    color: var(--blanco);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── FONDO ANIMADO ── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(200,245,90,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,245,90,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .bg-blob {
+    position: fixed; z-index: 0; pointer-events: none;
+    border-radius: 50%; filter: blur(120px); opacity: 0.15;
+  }
+  .bg-blob-1 { width: 600px; height: 600px; background: var(--verde); top: -200px; right: -200px; }
+  .bg-blob-2 { width: 400px; height: 400px; background: #4af; bottom: -100px; left: -100px; }
+
+  /* ── CONTENEDOR PRINCIPAL ── */
+  .app {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ── PANTALLAS ── */
+  .screen { display: none; width: 100%; max-width: 460px; }
+  .screen.active { display: block; animation: slideUp .35s ease; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: rgba(20,20,20,0.92);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    padding: 40px;
+    backdrop-filter: blur(20px);
+  }
+
+  /* ── LOGO ── */
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 32px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: var(--verde);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 24px; height: 24px; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; }
+  .logo-sub { font-size: 11px; color: var(--texto-suave); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ── TÍTULOS ── */
+  h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .subtitle { color: var(--texto-suave); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+
+  /* ── FORMULARIOS ── */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--texto-suave); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%; padding: 12px 14px;
+    background: var(--gris); border: 1px solid var(--borde);
+    border-radius: 10px; color: var(--blanco);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color .2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus {
+    outline: none; border-color: var(--verde);
+  }
+  .field input::placeholder { color: var(--gris-claro); }
+  .field select option { background: var(--gris); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-error { font-size: 11px; color: var(--error); margin-top: 4px; display: none; }
+  .field-error.show { display: block; }
+
+  /* ── BOTONES ── */
+  .btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-primary {
+    background: var(--verde); color: var(--negro);
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--verde-oscuro); transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: transparent; color: var(--blanco);
+    border: 1px solid var(--borde); margin-top: 10px;
+  }
+  .btn-secondary:hover { border-color: var(--verde); color: var(--verde); }
+  .btn-google {
+    background: var(--gris); color: var(--blanco);
+    border: 1px solid var(--borde);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .btn-google:hover { border-color: #888; }
+  .btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ── DIVISOR ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 16px 0; color: var(--texto-suave); font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--borde);
+  }
+
+  /* ── LINKS ── */
+  .link {
+    background: none; border: none; color: var(--verde);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; text-decoration: none;
+  }
+  .link:hover { text-decoration: underline; }
+  .text-center { text-align: center; margin-top: 20px; font-size: 13px; color: var(--texto-suave); }
+
+  /* ── SELECCIÓN DE ROL ── */
+  .roles-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 20px;
+  }
+  .role-card {
+    border: 1px solid var(--borde); border-radius: 12px;
+    padding: 16px 12px; text-align: center;
+    cursor: pointer; transition: all .2s; background: var(--gris);
+  }
+  .role-card:hover { border-color: var(--verde); }
+  .role-card.selected { border-color: var(--verde); background: rgba(200,245,90,0.08); }
+  .role-card .role-icon { font-size: 26px; margin-bottom: 8px; }
+  .role-card .role-name {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    color: var(--blanco);
+  }
+  .role-card .role-desc { font-size: 11px; color: var(--texto-suave); margin-top: 3px; }
+  .role-card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* ── PASOS ── */
+  .steps {
+    display: flex; gap: 6px; margin-bottom: 24px;
+  }
+  .step-dot {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: var(--borde); transition: background .3s;
+  }
+  .step-dot.done { background: var(--verde-oscuro); }
+  .step-dot.active { background: var(--verde); }
+
+  /* ── BADGE DE ROL ── */
+  .rol-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; margin-bottom: 20px;
+  }
+  .rol-badge.jugador { background: rgba(200,245,90,0.12); color: var(--verde); border: 1px solid rgba(200,245,90,0.25); }
+  .rol-badge.club { background: rgba(100,180,255,0.12); color: #64b4ff; border: 1px solid rgba(100,180,255,0.25); }
+  .rol-badge.organizador { background: rgba(255,180,50,0.12); color: #ffb432; border: 1px solid rgba(255,180,50,0.25); }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--texto-suave);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; margin-bottom: 20px; padding: 0;
+    transition: color .2s;
+  }
+  .back-btn:hover { color: var(--blanco); }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  /* ── ALERTA ── */
+  .alert {
+    padding: 12px 14px; border-radius: 10px;
+    font-size: 13px; margin-bottom: 16px; display: none;
+  }
+  .alert.show { display: block; }
+  .alert-error { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3); color: #ff8080; }
+  .alert-success { background: rgba(200,245,90,0.1); border: 1px solid rgba(200,245,90,0.3); color: var(--verde); }
+
+  /* ── LOADING ── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: var(--negro);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PANTALLA DE ÉXITO ── */
+  .success-icon {
+    width: 64px; height: 64px;
+    background: rgba(200,245,90,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+  }
+
+  /* ── PANELES PLACEHOLDER ── */
+  .panel-placeholder {
+    text-align: center; padding: 40px 0;
+  }
+  .panel-placeholder .panel-emoji { font-size: 48px; margin-bottom: 16px; }
+  .panel-placeholder h2 { margin-bottom: 8px; }
+  .panel-placeholder p { color: var(--texto-suave); font-size: 14px; margin-bottom: 24px; }
+  .panel-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--borde);
+  }
+  .panel-nav .nav-user { font-size: 13px; color: var(--texto-suave); }
+  .panel-nav .nav-rating {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    color: var(--verde);
+  }
+  .panel-nav .nav-rating span { font-size: 12px; color: var(--texto-suave); font-family: 'DM Sans', sans-serif; font-weight: 400; display: block; }
+
+  /* ── SCROLL ── */
+  .overflow-scroll { max-height: 85vh; overflow-y: auto; }
+  .overflow-scroll::-webkit-scrollbar { width: 4px; }
+  .overflow-scroll::-webkit-scrollbar-track { background: transparent; }
+  .overflow-scroll::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 2px; }
+
+  /* ── NOTA PROVISIONAL ── */
+  .provisional-badge {
+    display: inline-block; font-size: 10px; padding: 2px 8px;
+    background: rgba(255,180,50,0.15); color: #ffb432;
+    border-radius: 10px; border: 1px solid rgba(255,180,50,0.3);
+    margin-left: 6px; vertical-align: middle;
+  }
+
+  /* ════════════════════════════════════════
+     DASHBOARD LAYOUT — RESPONSIVE
+  ════════════════════════════════════════ */
+
+  /* Pantallas de panel usan layout completo */
+  .screen.panel-screen {
+    max-width: 100% !important;
+    width: 100%;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+  }
+  .screen.panel-screen.active {
+    display: flex;
+    animation: none;
+  }
+
+  /* Layout sidebar + contenido */
+  .dashboard-layout {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: rgba(12,12,12,0.99);
+    border-right: 1px solid var(--borde);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    overflow-y: auto;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+  }
+
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--borde);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px;
+    background: var(--verde); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sidebar-logo-icon svg { width: 20px; height: 20px; }
+  .sidebar-logo-text {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px;
+  }
+  .sidebar-logo-sub { font-size: 10px; color: var(--texto-suave); }
+
+  .sidebar-user {
+    padding: 0 16px 16px;
+    border-bottom: 1px solid var(--borde);
+    margin-bottom: 12px;
+  }
+  .sidebar-user-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(200,245,90,0.1);
+    border: 1px solid rgba(200,245,90,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 14px; color: var(--verde);
+    margin-bottom: 8px;
+  }
+  .sidebar-user-name {
+    font-size: 13px; font-weight: 500; color: var(--blanco);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sidebar-user-sub { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+  .sidebar-user-rating {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  }
+  .sidebar-user-rating-num {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 20px; color: var(--verde);
+  }
+  .sidebar-user-rating-label { font-size: 10px; color: var(--texto-suave); line-height: 1.3; }
+
+  .sidebar-nav { flex: 1; padding: 0 8px; }
+  .sidebar-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; transition: all .15s;
+    font-size: 13px; color: var(--texto-suave);
+    border: none; background: none; width: 100%;
+    font-family: 'DM Sans', sans-serif; text-align: left;
+    margin-bottom: 2px;
+  }
+  .sidebar-nav-item:hover { background: var(--gris); color: var(--blanco); }
+  .sidebar-nav-item.active {
+    background: rgba(200,245,90,0.1);
+    color: var(--verde); font-weight: 500;
+  }
+  .sidebar-nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-nav-section {
+    font-size: 10px; color: var(--texto-suave);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 12px 12px 4px; font-weight: 500;
+  }
+
+  .sidebar-footer {
+    padding: 16px 8px 0;
+    border-top: 1px solid var(--borde);
+    margin-top: auto;
+  }
+
+  /* ── CONTENIDO PRINCIPAL ── */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--negro);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--borde);
+    background: rgba(10,10,10,0.8);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 10;
+    flex-shrink: 0;
+  }
+  .main-topbar-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px;
+  }
+  .main-topbar-sub { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+
+  .main-body { padding: 28px; flex: 1; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--gris);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 20px;
+    transition: border-color .2s;
+  }
+  .kpi-card:hover { border-color: rgba(200,245,90,0.2); }
+  .kpi-label {
+    font-size: 11px; color: var(--texto-suave);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 36px; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .kpi-sub { font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: var(--gris);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 12px; font-weight: 600;
+    color: var(--texto-suave);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* ── TABLA DE JUGADORES ── */
+  .player-table { width: 100%; border-collapse: collapse; }
+  .player-table th {
+    font-size: 11px; color: var(--texto-suave);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--borde); font-weight: 500;
+  }
+  .player-table td {
+    padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px; vertical-align: middle;
+  }
+  .player-table tr:last-child td { border-bottom: none; }
+  .player-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .player-table .mto-badge {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 16px; color: var(--verde);
+  }
+  .player-table .action-btn {
+    font-size: 11px; padding: 4px 10px;
+    border-radius: 6px; border: 1px solid var(--borde);
+    background: transparent; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .player-table .action-btn:hover { border-color: var(--verde); color: var(--verde); }
+  .player-table .action-btn.danger:hover { border-color: #ff8080; color: #ff8080; }
+
+  /* ── TOP RANKING TABLE ── */
+  .rank-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 13px; width: 28px; text-align: center; flex-shrink: 0;
+  }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 13px; font-weight: 500; }
+  .rank-meta { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
+  .rank-mto {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 17px; color: var(--verde); flex-shrink: 0;
+  }
+
+  /* ── JUGADOR PANEL — SECCIONES ── */
+  .jug-hero {
+    background: linear-gradient(135deg, rgba(200,245,90,0.08) 0%, rgba(200,245,90,0.02) 100%);
+    border: 1px solid rgba(200,245,90,0.15);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 24px;
+    flex-wrap: wrap;
+  }
+  .jug-hero-rating {
+    font-family: 'Syne', sans-serif; font-weight: 900;
+    font-size: 64px; color: var(--verde); line-height: 1;
+    flex-shrink: 0;
+  }
+  .jug-hero-info { flex: 1; min-width: 200px; }
+  .jug-hero-name {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 22px; margin-bottom: 4px;
+  }
+  .jug-hero-meta { font-size: 13px; color: var(--texto-suave); margin-bottom: 12px; }
+
+  /* Grilla 2 columnas para paneles */
+  .panel-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .sidebar.mobile-open { display: flex; position: fixed; inset: 0; z-index: 50; width: 260px; }
+    .mobile-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 49;
+    }
+    .mobile-overlay.show { display: block; }
+    .main-topbar { padding: 14px 16px; }
+    .main-body { padding: 16px; }
+    .panel-grid-2 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .jug-hero { flex-direction: column; gap: 12px; text-align: center; }
+    .jug-hero-rating { font-size: 48px; }
+    .player-table { display: none; }
+    .player-cards { display: flex !important; }
+  }
+  @media (min-width: 769px) {
+    .player-cards { display: none; }
+    .hamburger { display: none; }
+  }
+  .hamburger {
+    background: none; border: 1px solid var(--borde);
+    border-radius: 8px; padding: 6px 10px;
+    color: var(--blanco); cursor: pointer; font-size: 16px;
+  }
+  .player-cards { flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-blob bg-blob-1"></div>
+<div class="bg-blob bg-blob-2"></div>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 1: INICIO
+  ═══════════════════════════════════════════ -->
+  <div class="screen active" id="s-inicio">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+            <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">Mito Rating</div>
+          <div class="logo-sub">Pádel Argentino</div>
+        </div>
+      </div>
+
+      <h1>Tu nivel real,<br>en un número.</h1>
+      <p class="subtitle">El sistema de rating que ordena el pádel argentino. Sin auto-declaraciones. Sin trampas.</p>
+
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Continuar con Google
+      </button>
+
+      <div class="divider">o</div>
+
+      <button class="btn btn-primary" onclick="ir('s-login')">Ingresar con email</button>
+      <div class="text-center">
+        ¿No tenés cuenta? <button class="link" onclick="ir('s-elegir-rol')">Registrarse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 2: LOGIN
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-login">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-inicio')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+            <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <div><div class="logo-text">Mito Rating</div></div>
+      </div>
+
+      <h2>Ingresá a tu cuenta</h2>
+      <p class="subtitle">Accedé a tu panel según tu perfil.</p>
+
+      <div class="alert alert-error" id="alert-login"></div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Ingresar</button>
+      <button class="btn btn-secondary" onclick="ir('s-recuperar')">Olvidé mi contraseña</button>
+
+      <div class="text-center">
+        ¿No tenés cuenta? <button class="link" onclick="ir('s-elegir-rol')">Registrarse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 3: RECUPERAR CONTRASEÑA
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-recuperar">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-login')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver al login
+      </button>
+      <h2>Recuperar contraseña</h2>
+      <p class="subtitle">Te enviamos un enlace para restablecer tu contraseña. Válido por 30 minutos.</p>
+
+      <div class="alert alert-error" id="alert-recuperar"></div>
+      <div class="alert alert-success" id="alert-recuperar-ok"></div>
+
+      <div class="field">
+        <label>Email de tu cuenta</label>
+        <input type="email" id="recuperar-email" placeholder="tu@email.com">
+      </div>
+      <button class="btn btn-primary" id="btn-recuperar" onclick="doRecuperar()">Enviar enlace</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 4: ELEGIR ROL
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-elegir-rol">
+    <div class="card">
+      <button class="back-btn" onclick="ir('s-inicio')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <h2>Crear cuenta</h2>
+      <p class="subtitle">¿Cómo vas a usar Mito Rating? Tu elección define tu panel y es permanente.</p>
+
+      <div class="roles-grid">
+        <div class="role-card" id="rc-jugador" onclick="seleccionarRol('jugador')">
+          <div class="role-icon">🎾</div>
+          <div class="role-name">Jugador</div>
+          <div class="role-desc">Jugar y competir</div>
+        </div>
+        <div class="role-card" id="rc-club" onclick="seleccionarRol('club')">
+          <div class="role-icon">🏟️</div>
+          <div class="role-name">Club</div>
+          <div class="role-desc">Gestionar mi club</div>
+        </div>
+        <div class="role-card" id="rc-organizador" onclick="seleccionarRol('organizador')">
+          <div class="role-icon">🏆</div>
+          <div class="role-name">Organizador</div>
+          <div class="role-desc">Crear torneos</div>
+        </div>
+        <div class="role-card disabled">
+          <div class="role-icon">🛡️</div>
+          <div class="role-name">Admin</div>
+          <div class="role-desc">Solo por invitación</div>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--texto-suave);text-align:center;margin-bottom:16px;">
+        ℹ️ El rol Admin se asigna manualmente por Seba. Si te equivocás de perfil, solo el admin puede corregirlo.
+      </p>
+
+      <button class="btn btn-primary" id="btn-continuar-rol" onclick="continuarRol()" style="opacity:.4;pointer-events:none">
+        Continuar
+      </button>
+      <div class="text-center">
+        ¿Ya tenés cuenta? <button class="link" onclick="ir('s-login')">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 5A: REGISTRO JUGADOR — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-jugador-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge jugador">🎾 Jugador</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-jug1"></div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="jug-nombre" placeholder="Juan Pérez">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="jug-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="jug-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="jug-pass2" placeholder="Repetir contraseña">
+      </div>
+      <button class="btn btn-primary" onclick="jugPaso1()">Siguiente →</button>
+
+      <div class="divider" style="margin-top:16px">o registrate con</div>
+      <button class="btn btn-google" onclick="loginGoogle()">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Google
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 5B: REGISTRO JUGADOR — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-jugador-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-jugador-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge jugador">🎾 Jugador</span>
+      <h2>Tu perfil de juego</h2>
+      <p class="subtitle">Paso 2 de 2 — Esta info define tu Rating MTO inicial y en qué ranking aparecés.</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-jug2"></div>
+
+      <div class="field">
+        <label>Género</label>
+        <select id="jug-genero">
+          <option value="">Seleccioná tu género</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Categoría aproximada</label>
+        <select id="jug-categoria">
+          <option value="">¿En qué categoría jugás?</option>
+          <option value="sin_categoria">Sin categoría / soy nuevo</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Rol en cancha</label>
+        <select id="jug-rol">
+          <option value="">Seleccioná tu posición</option>
+          <option value="derecha">Derecha (55% del cambio de rating)</option>
+          <option value="reves">Revés (45% del cambio de rating)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="jug-provincia" onchange="cargarCiudades('jug-provincia','jug-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="jug-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btn-reg-jugador" onclick="doRegistroJugador()">Crear mi cuenta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 6A: REGISTRO CLUB — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-club-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge club">🏟️ Club</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-club1"></div>
+
+      <div class="field">
+        <label>Nombre del club</label>
+        <input type="text" id="club-nombre" placeholder="Club Palermo Pádel">
+      </div>
+      <div class="field">
+        <label>Email institucional</label>
+        <input type="email" id="club-email" placeholder="info@miclub.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="club-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Nombre del responsable</label>
+        <input type="text" id="club-responsable" placeholder="Nombre y apellido">
+      </div>
+      <button class="btn btn-primary" onclick="clubPaso1()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 6B: REGISTRO CLUB — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-club-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-club-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge club">🏟️ Club</span>
+      <h2>Datos del club</h2>
+      <p class="subtitle">Paso 2 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-club2"></div>
+
+      <div class="field">
+        <label>Teléfono de contacto</label>
+        <input type="tel" id="club-telefono" placeholder="+54 11 0000-0000">
+      </div>
+      <div class="field">
+        <label>Dirección física</label>
+        <input type="text" id="club-direccion" placeholder="Av. Corrientes 1234">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="club-provincia" onchange="cargarCiudades('club-provincia','club-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="club-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-reg-club" onclick="doRegistroClub()">Crear cuenta de club</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 7A: REGISTRO ORGANIZADOR — PASO 1
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-org-1">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-elegir-rol')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Cambiar perfil
+      </button>
+
+      <span class="rol-badge organizador">🏆 Organizador</span>
+      <h2>Datos de acceso</h2>
+      <p class="subtitle">Paso 1 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-org1"></div>
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input type="text" id="org-nombre" placeholder="Nombre y apellido">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="org-email" placeholder="tu@email.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="org-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Tipo de organizador</label>
+        <select id="org-tipo">
+          <option value="">Seleccioná tu tipo</option>
+          <option value="independiente">Independiente</option>
+          <option value="representante_club">Representante de club</option>
+          <option value="federacion">Federación o asociación</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="orgPaso1()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 7B: REGISTRO ORGANIZADOR — PASO 2
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-reg-org-2">
+    <div class="card overflow-scroll">
+      <button class="back-btn" onclick="ir('s-reg-org-1')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </button>
+
+      <span class="rol-badge organizador">🏆 Organizador</span>
+      <h2>Datos de contacto</h2>
+      <p class="subtitle">Paso 2 de 2</p>
+      <div class="steps">
+        <div class="step-dot done"></div>
+        <div class="step-dot done"></div>
+        <div class="step-dot active"></div>
+      </div>
+
+      <div class="alert alert-error" id="alert-org2"></div>
+
+      <div class="field">
+        <label>Teléfono de contacto</label>
+        <input type="tel" id="org-telefono" placeholder="+54 11 0000-0000">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="org-provincia" onchange="cargarCiudades('org-provincia','org-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="org-ciudad">
+            <option value="">Ciudad</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-reg-org" onclick="doRegistroOrg()">Crear cuenta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 8: COMPLETA PERFIL GOOGLE (JUGADOR)
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-google-jugador">
+    <div class="card overflow-scroll">
+      <span class="rol-badge jugador">🎾 Jugador — Google</span>
+      <h2>Completá tu perfil</h2>
+      <p class="subtitle">Una sola vez. Esta info define tu Rating MTO inicial y en qué ranking aparecés.</p>
+
+      <div class="alert alert-error" id="alert-gjug"></div>
+
+      <div class="field">
+        <label>Género</label>
+        <select id="gjug-genero">
+          <option value="">Seleccioná tu género</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Categoría aproximada</label>
+        <select id="gjug-categoria">
+          <option value="">¿En qué categoría jugás?</option>
+          <option value="sin_categoria">Sin categoría / soy nuevo</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Rol en cancha</label>
+        <select id="gjug-rol">
+          <option value="">Seleccioná tu posición</option>
+          <option value="derecha">Derecha</option>
+          <option value="reves">Revés</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Provincia</label>
+          <select id="gjug-provincia" onchange="cargarCiudades('gjug-provincia','gjug-ciudad')">
+            <option value="">Provincia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad</label>
+          <select id="gjug-ciudad"><option value="">Ciudad</option></select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btn-gjug" onclick="completarPerfilGoogle()">Guardar y entrar</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 9: ÉXITO JUGADOR
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-jugador">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🎾</div>
+      <h2>¡Cuenta creada!</h2>
+      <span class="rol-badge jugador" style="margin:12px auto 16px;display:inline-flex">🎾 Jugador</span>
+      <p id="ok-jugador-rating" style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800;color:var(--verde);margin:8px 0"></p>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:8px" id="ok-jugador-cat"></p>
+      <p style="color:var(--texto-suave);font-size:12px;margin-bottom:24px">
+        <span class="provisional-badge">provisional</span> Tu rating real se construye con partidos confirmados.
+      </p>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Revisá tu email para verificar tu cuenta.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 10: ÉXITO CLUB
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-club">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🏟️</div>
+      <h2>¡Club registrado!</h2>
+      <span class="rol-badge club" style="margin:12px auto 16px;display:inline-flex">🏟️ Club</span>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Tu cuenta está activa. Revisá tu email para verificarla y accedé a tu panel de club.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 11: ÉXITO ORGANIZADOR
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-ok-org">
+    <div class="card" style="text-align:center">
+      <div class="success-icon">🏆</div>
+      <h2>¡Cuenta creada!</h2>
+      <span class="rol-badge organizador" style="margin:12px auto 16px;display:inline-flex">🏆 Organizador</span>
+      <p style="color:var(--texto-suave);font-size:13px;margin-bottom:24px">
+        Tu cuenta está activa. Podés empezar a crear torneos desde tu panel.
+      </p>
+      <button class="btn btn-primary" onclick="irAlPanel()">Ir a mi panel →</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 12: PANEL JUGADOR -->
+  <div class="screen panel-screen" id="s-panel-jugador">
+    <!-- Mobile overlay -->
+    <div class="mobile-overlay" id="overlay-jug" onclick="closeSidebar('jug')"></div>
+
+    <div class="dashboard-layout">
+      <!-- SIDEBAR -->
+      
+      <div class="sidebar" id="sidebar-jug">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+              <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+            </svg>
+          </div>
+          <div>
+            <div class="sidebar-logo-text">Mito</div>
+            <div class="sidebar-logo-sub">Rating</div>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <div id="jug-sb-avatar" class="sidebar-user-avatar">—</div>
+          <div id="panel-jug-nombre" class="sidebar-user-name">—</div>
+          <div id="panel-jug-cat" class="sidebar-user-sub">—</div>
+          
+        <div class="sidebar-user-rating">
+          <div id="jug-sb-rating" class="sidebar-user-rating-num">—</div>
+          <div class="sidebar-user-rating-label">Rating<br>MTO</div>
+        </div>
+        </div>
+        <nav class="sidebar-nav">
+          
+        <button class="sidebar-nav-item active" onclick="jugTab('inicio')" id="jug-tab-inicio">
+          <span class="nav-icon">📊</span>Mi panel
+        </button>
+        <button class="sidebar-nav-item " onclick="jugTab('partidos')" id="jug-tab-partidos">
+          <span class="nav-icon">🎾</span>Mis partidos
+        </button>
+        <button class="sidebar-nav-item " onclick="jugTab('torneos')" id="jug-tab-torneos">
+          <span class="nav-icon">🏆</span>Torneos
+        </button>
+        <button class="sidebar-nav-item " onclick="jugTab('ranking')" id="jug-tab-ranking">
+          <span class="nav-icon">📈</span>Ranking
+        </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="sidebar-nav-item" onclick="doLogout()">
+            <span class="nav-icon">🚪</span>Cerrar sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENIDO -->
+      <div class="main-content">
+        <div class="main-topbar">
+          <div>
+            <button class="hamburger" onclick="openSidebar('jug')">☰</button>
+            <span id="jug-topbar-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-left:12px">Mi panel</span>
+          </div>
+          <div id="panel-jug-rating" style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--verde)">—</div>
+        </div>
+
+        <div class="main-body">
+
+          <!-- SECCIÓN INICIO -->
+          <div id="jug-sec-inicio">
+            <!-- HERO -->
+            <div class="jug-hero">
+              <div>
+                <div id="jug-hero-rating" style="font-family:'Syne',sans-serif;font-weight:900;font-size:64px;color:var(--verde);line-height:1">—</div>
+                <div id="jug-provisional-badge" style="display:none;font-size:11px;padding:3px 10px;background:rgba(255,180,50,0.15);color:#ffb432;border-radius:10px;border:1px solid rgba(255,180,50,0.3);margin-top:6px;display:inline-block">provisional</div>
+              </div>
+              <div style="flex:1;min-width:180px">
+                <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Rating MTO</div>
+                <div style="font-size:12px;color:var(--texto-suave);margin-bottom:12px" id="jug-hero-meta">—</div>
+                <!-- Barra de progreso -->
+                <div style="margin-bottom:4px;display:flex;justify-content:space-between;font-size:11px;color:var(--texto-suave)">
+                  <span id="jug-cat-actual">—</span>
+                  <span id="jug-cat-siguiente">—</span>
+                </div>
+                <div style="height:5px;background:var(--borde);border-radius:3px;overflow:hidden">
+                  <div id="jug-progreso-bar" style="height:100%;background:var(--verde);border-radius:3px;transition:width .6s ease;width:0%"></div>
+                </div>
+                <div id="jug-progreso-txt" style="font-size:11px;color:var(--texto-suave);margin-top:4px"></div>
+              </div>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">Partidos jugados</div>
+                <div id="jug-stat-partidos" class="kpi-value" style="color:var(--blanco)">0</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Victorias</div>
+                <div id="jug-stat-victorias" class="kpi-value" style="color:var(--verde)">0</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">% victorias</div>
+                <div id="jug-stat-pct" class="kpi-value" style="color:var(--blanco)">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Mejor racha</div>
+                <div id="jug-stat-racha" class="kpi-value" style="color:var(--blanco)">0</div>
+              </div>
+            </div>
+
+            <!-- ÚLTIMOS PARTIDOS -->
+            <div class="section-card">
+              <div class="section-title">
+                Últimos partidos
+                <button onclick="jugTab('partidos')" style="font-size:11px;color:var(--verde);background:none;border:none;cursor:pointer">Ver todos →</button>
+              </div>
+              <div id="jug-partidos-lista">
+                <div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">
+                  Todavía no tenés partidos confirmados.<br>
+                  <span style="font-size:12px">Registrá tu primer partido para construir tu rating real.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACCIONES RÁPIDAS -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <button class="btn btn-primary" onclick="abrirModalPartido()">🎾 Registrar partido</button>
+              <button class="btn btn-secondary" onclick="jugTab('torneos')">🏆 Ver torneos</button>
+            </div>
+          </div>
+
+          <!-- SECCIÓN PARTIDOS -->
+          <div id="jug-sec-partidos" style="display:none">
+
+            <!-- PENDIENTES DE CONFIRMACIÓN -->
+            <div class="section-card" style="margin-bottom:16px">
+              <div class="section-title">
+                ⏳ Pendientes de tu confirmación
+                <button onclick="cargarMisPartidos()" style="font-size:11px;color:var(--verde);background:none;border:none;cursor:pointer">↻ Actualizar</button>
+              </div>
+              <div id="jug-partidos-pendientes">
+                <div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">Cargando...</div>
+              </div>
+            </div>
+
+            <!-- HISTORIAL CONFIRMADOS -->
+            <div class="section-card">
+              <div class="section-title">✅ Historial de partidos confirmados</div>
+              <div id="jug-partidos-full">
+                <div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">Cargando...</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SECCIÓN TORNEOS -->
+          <div id="jug-sec-torneos" style="display:none">
+            <div class="section-card" style="margin-bottom:16px">
+              <div class="section-title">
+                Torneos disponibles
+                <button onclick="cargarTorneosJugador()" style="font-size:11px;color:var(--verde);background:none;border:none;cursor:pointer">↻ Actualizar</button>
+              </div>
+              <div id="jug-torneos-lista">
+                <div style="text-align:center;padding:32px;color:var(--texto-suave);font-size:13px">Cargando torneos...</div>
+              </div>
+            </div>
+            <div class="section-card" style="margin-bottom:16px">
+              <div class="section-title">Mis inscripciones</div>
+              <div id="jug-mis-inscripciones">
+                <div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">Sin inscripciones todavía.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN RANKING -->
+          <div id="jug-sec-ranking" style="display:none">
+            <div class="panel-grid-2">
+              <div class="section-card">
+                <div class="section-title">🏆 Ranking <span id="jug-ranking-prov-label" style="color:var(--verde)">—</span></div>
+                <div style="text-align:center;padding:20px">
+                  <div id="jug-ranking-prov" style="font-family:'Syne',sans-serif;font-weight:900;font-size:48px;color:var(--verde)">#—</div>
+                  <div style="font-size:12px;color:var(--texto-suave);margin-top:4px">en tu provincia</div>
+                </div>
+              </div>
+              <div class="section-card">
+                <div class="section-title">🇦🇷 Ranking Argentina</div>
+                <div style="text-align:center;padding:20px">
+                  <div id="jug-ranking-pais" style="font-family:'Syne',sans-serif;font-weight:900;font-size:48px;color:var(--verde)">#—</div>
+                  <div style="font-size:12px;color:var(--texto-suave);margin-top:4px">a nivel nacional</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ═══════════════════════════════════════════
+       PANTALLA 13: PANEL CLUB COMPLETO
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-club">
+    <div class="card overflow-scroll" style="max-width:520px">
+
+      <!-- HEADER CLUB -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(100,180,255,0.1);border:1px solid rgba(100,180,255,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🏟️</div>
+          <div>
+            <div id="panel-club-nombre" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">—</div>
+            <div id="panel-club-ubicacion" style="font-size:11px;color:var(--texto-suave)">—</div>
+          </div>
+        </div>
+        <button onclick="doLogout()" style="background:none;border:1px solid var(--borde);border-radius:8px;padding:6px 12px;color:var(--texto-suave);font-size:12px;cursor:pointer">Salir</button>
+      </div>
+
+      <!-- KPIs CLUB -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="club-kpi-miembros" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#64b4ff">0</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Miembros</div>
+        </div>
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="club-kpi-rating" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--verde)">—</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">MTO prom.</div>
+        </div>
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="club-kpi-torneos" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--blanco)">0</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Torneos</div>
+        </div>
+      </div>
+
+      <!-- PERFIL DEL CLUB -->
+      <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Datos del club</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--texto-suave)">Responsable</span>
+            <span id="club-info-responsable" style="color:var(--blanco)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--texto-suave)">Teléfono</span>
+            <span id="club-info-telefono" style="color:var(--blanco)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--texto-suave)">Dirección</span>
+            <span id="club-info-direccion" style="color:var(--blanco);text-align:right;max-width:60%">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- JUGADORES MIEMBROS -->
+      <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Jugadores miembros</div>
+        <div id="club-miembros-lista">
+          <div style="text-align:center;padding:16px;color:var(--texto-suave);font-size:13px">Todavía no hay jugadores asociados a este club.</div>
+        </div>
+      </div>
+
+      <!-- ACCIONES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-primary" onclick="abrirModalCrearTorneo('club')">🏆 Crear torneo</button>
+        <button class="btn btn-secondary" onclick="alert('Próximamente: editar perfil')">✏️ Editar perfil</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA 14: PANEL ORGANIZADOR COMPLETO
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-panel-org">
+    <div class="card overflow-scroll" style="max-width:520px">
+
+      <!-- HEADER ORG -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,180,50,0.1);border:1px solid rgba(255,180,50,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">🏆</div>
+          <div>
+            <div id="panel-org-nombre" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">—</div>
+            <div id="panel-org-tipo" style="font-size:11px;color:#ffb432">—</div>
+          </div>
+        </div>
+        <button onclick="doLogout()" style="background:none;border:1px solid var(--borde);border-radius:8px;padding:6px 12px;color:var(--texto-suave);font-size:12px;cursor:pointer">Salir</button>
+      </div>
+
+      <!-- KPIs ORG -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="org-kpi-activos" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:#ffb432">0</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Activos</div>
+        </div>
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="org-kpi-total" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--blanco)">0</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Total</div>
+        </div>
+        <div style="background:var(--gris);border-radius:12px;padding:14px;text-align:center">
+          <div id="org-kpi-inscriptos" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--verde)">0</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Inscriptos</div>
+        </div>
+      </div>
+
+      <!-- TORNEOS DEL ORGANIZADOR -->
+      <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Mis torneos</div>
+        <div id="org-torneos-lista">
+          <div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">
+            Todavía no creaste ningún torneo.<br>
+            <span style="font-size:12px">Creá tu primer torneo para empezar.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS CONTACTO -->
+      <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Mis datos</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--texto-suave)">Teléfono</span>
+            <span id="org-info-tel" style="color:var(--blanco)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px">
+            <span style="color:var(--texto-suave)">Ubicación</span>
+            <span id="org-info-ubicacion" style="color:var(--blanco)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCIONES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-primary" onclick="abrirModalCrearTorneo('organizador')">🏆 Crear torneo</button>
+        <button class="btn btn-secondary" onclick="alert('Próximamente: editar perfil')">✏️ Editar perfil</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA RESET: NUEVA CONTRASEÑA
+  ═══════════════════════════════════════════ -->
+  <div class="screen" id="s-nueva-password">
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+            <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+          </svg>
+        </div>
+        <div><div class="logo-text">Mito Rating</div></div>
+      </div>
+      <h2>Nueva contraseña</h2>
+      <p class="subtitle">Elegí una contraseña nueva para tu cuenta. Mínimo 8 caracteres.</p>
+      <div class="alert alert-error" id="alert-nueva-pass"></div>
+      <div class="alert alert-success" id="alert-nueva-pass-ok"></div>
+      <div class="field">
+        <label>Nueva contraseña</label>
+        <input type="password" id="nueva-pass" placeholder="Mínimo 8 caracteres">
+      </div>
+      <div class="field">
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" id="nueva-pass2" placeholder="Repetir contraseña">
+      </div>
+      <button class="btn btn-primary" id="btn-nueva-pass" onclick="doNuevaPassword()">
+        Guardar nueva contraseña
+      </button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 15: PANEL ADMIN -->
+  <div class="screen panel-screen" id="s-panel-admin">
+    <div class="mobile-overlay" id="overlay-admin" onclick="closeSidebar('admin')"></div>
+    <div class="dashboard-layout">
+
+      <!-- SIDEBAR ADMIN -->
+      <div class="sidebar" id="sidebar-admin">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="#0a0a0a" stroke-width="2"/>
+              <path d="M8 12 Q12 7 16 12 Q12 17 8 12Z" fill="#0a0a0a"/>
+            </svg>
+          </div>
+          <div>
+            <div class="sidebar-logo-text">Mito</div>
+            <div class="sidebar-logo-sub">Admin</div>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar" style="background:rgba(200,245,90,0.1);border-color:var(--verde);color:var(--verde)">🛡️</div>
+          <div class="sidebar-user-name">Administrador</div>
+          <div class="sidebar-user-sub" style="color:var(--verde)">Acceso total</div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="sidebar-nav-section">Principal</div>
+          <button class="sidebar-nav-item active" onclick="adminTab('dashboard')" id="tab-dashboard">
+            <span class="nav-icon">📊</span>Dashboard
+          </button>
+          <div class="sidebar-nav-section">Gestión</div>
+          <button class="sidebar-nav-item" onclick="adminTab('jugadores')" id="tab-jugadores">
+            <span class="nav-icon">🎾</span>Jugadores
+          </button>
+          <button class="sidebar-nav-item" onclick="adminTab('clubes-tab')" id="tab-clubes">
+            <span class="nav-icon">🏟️</span>Clubes
+          </button>
+          <button class="sidebar-nav-item" onclick="adminTab('torneos-tab')" id="tab-torneos-admin">
+            <span class="nav-icon">🏆</span>Torneos
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="sidebar-nav-item" onclick="doLogout()">
+            <span class="nav-icon">🚪</span>Cerrar sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTENIDO ADMIN -->
+      <div class="main-content">
+        <div class="main-topbar">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="hamburger" onclick="openSidebar('admin')">☰</button>
+            <div>
+              <div id="admin-topbar-title" class="main-topbar-title">Dashboard</div>
+              <div class="main-topbar-sub">Panel de administración</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--texto-suave)" id="admin-topbar-date"></div>
+        </div>
+
+        <div class="main-body">
+
+          <!-- TAB DASHBOARD -->
+          <div id="admin-dashboard">
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">Total jugadores</div>
+                <div id="kpi-jugadores" class="kpi-value" style="color:var(--verde)">—</div>
+                <div class="kpi-sub">registrados</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Total clubes</div>
+                <div id="kpi-clubes" class="kpi-value" style="color:#64b4ff">—</div>
+                <div class="kpi-sub">activos</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Masculinos</div>
+                <div id="kpi-masculinos" class="kpi-value" style="color:var(--blanco)">—</div>
+                <div class="kpi-sub">jugadores</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Femeninos</div>
+                <div id="kpi-femeninos" class="kpi-value" style="color:#ff80c8">—</div>
+                <div class="kpi-sub">jugadoras</div>
+              </div>
+            </div>
+
+            <div class="panel-grid-2">
+              <div class="section-card">
+                <div class="section-title">🏆 Top masculino</div>
+                <div id="admin-top-masc"></div>
+              </div>
+              <div class="section-card">
+                <div class="section-title" style="color:#ff80c8">🏆 Top femenino</div>
+                <div id="admin-top-fem"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB JUGADORES -->
+          <div id="admin-jugadores" style="display:none">
+            <div class="section-card" style="margin-bottom:16px">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <input type="text" id="admin-buscar-jug" placeholder="🔍 Buscar por nombre o email..." oninput="filtrarJugadores()" style="flex:1;min-width:200px;padding:10px 14px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-size:13px;font-family:'DM Sans',sans-serif">
+                <select id="filtro-genero" onchange="filtrarJugadores()" style="padding:10px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-size:12px;font-family:'DM Sans',sans-serif">
+                  <option value="">Todos los géneros</option>
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                </select>
+                <select id="filtro-categoria" onchange="filtrarJugadores()" style="padding:10px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-size:12px;font-family:'DM Sans',sans-serif">
+                  <option value="">Todas las categorías</option>
+                  <option value="sin_categoria">Sin categoría</option>
+                  <option value="8va">8va</option><option value="7ma">7ma</option>
+                  <option value="6ta">6ta</option><option value="5ta">5ta</option>
+                  <option value="4ta">4ta</option><option value="3ra">3ra</option>
+                  <option value="2da">2da</option><option value="1ra">1ra</option>
+                </select>
+                <button onclick="exportarCSV()" style="padding:10px 16px;background:rgba(200,245,90,0.1);border:1px solid rgba(200,245,90,0.3);border-radius:10px;color:var(--verde);font-size:12px;cursor:pointer;white-space:nowrap">⬇ CSV</button>
+              </div>
+              <div id="admin-jug-count" style="font-size:11px;color:var(--texto-suave);margin-top:8px"></div>
+            </div>
+
+            <!-- Tabla desktop -->
+            <div class="section-card" style="overflow-x:auto">
+              <table class="player-table" id="admin-tabla-jug">
+                <thead>
+                  <tr>
+                    <th>Jugador</th>
+                    <th>Género</th>
+                    <th>Categoría</th>
+                    <th>Ubicación</th>
+                    <th>MTO</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-lista-jugadores"></tbody>
+              </table>
+              <!-- Cards mobile -->
+              <div id="admin-lista-jugadores-mobile" class="player-cards" style="display:none"></div>
+            </div>
+          </div>
+
+          <!-- TAB CLUBES -->
+          <div id="admin-clubes-tab" style="display:none">
+            <div class="section-card">
+              <div class="section-title">Clubes registrados</div>
+              <div id="admin-lista-clubes"></div>
+            </div>
+          </div>
+
+          <!-- TAB TORNEOS -->
+          <div id="admin-torneos-tab" style="display:none">
+            <div class="section-card">
+              <div class="section-title">
+                Torneos registrados
+                <button onclick="cargarTorneosAdmin()" style="font-size:11px;color:var(--verde);background:none;border:none;cursor:pointer">↻ Actualizar</button>
+              </div>
+              <div id="admin-torneos-lista">
+                <div style="text-align:center;padding:32px;color:var(--texto-suave);font-size:13px">Cargando...</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR JUGADOR -->
+  <div id="modal-editar" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px">
+    <div style="background:#111;border:1px solid var(--borde);border-radius:16px;padding:28px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Editar jugador</div>
+        <button onclick="cerrarModal()" style="background:none;border:none;color:var(--texto-suave);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <input type="hidden" id="edit-id">
+      <div class="field"><label>Nombre completo</label><input type="text" id="edit-nombre" placeholder="Nombre y apellido"></div>
+      <div class="field">
+        <label>Género</label>
+        <select id="edit-genero">
+          <option value="">Sin definir</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Categoría habilitada</label>
+        <select id="edit-categoria">
+          <option value="sin_categoria">Sin categoría</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Rating MTO manual</label>
+        <input type="number" id="edit-rating" min="0" max="10" step="0.1" placeholder="0.0 a 10.0">
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Provincia</label><input type="text" id="edit-provincia" placeholder="Provincia"></div>
+        <div class="field"><label>Ciudad</label><input type="text" id="edit-ciudad" placeholder="Ciudad"></div>
+      </div>
+      <div class="field">
+        <label>Rol en cancha</label>
+        <select id="edit-rol">
+          <option value="">Sin definir</option>
+          <option value="derecha">Derecha</option>
+          <option value="reves">Revés</option>
+        </select>
+      </div>
+      <div id="edit-alert" class="alert alert-error"></div>
+      <button class="btn btn-primary" id="btn-guardar-edit" onclick="guardarEdicion()" style="margin-bottom:10px">Guardar cambios</button>
+      <button onclick="cerrarModal()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMAR ELIMINAR -->
+  <div id="modal-eliminar" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px">
+    <div style="background:#111;border:1px solid rgba(255,77,77,0.3);border-radius:16px;padding:28px;width:100%;max-width:360px;text-align:center">
+      <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:8px">¿Eliminar jugador?</div>
+      <div id="eliminar-nombre-txt" style="color:var(--texto-suave);font-size:13px;margin-bottom:20px">Esta acción no se puede deshacer.</div>
+      <input type="hidden" id="eliminar-id">
+      <button onclick="confirmarEliminar()" class="btn" style="background:rgba(255,77,77,0.15);color:#ff8080;border:1px solid rgba(255,77,77,0.3);margin-bottom:10px">Sí, eliminar</button>
+      <button onclick="cerrarModalEliminar()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+
+
+  <!-- MODAL REGISTRAR PARTIDO -->
+  <div id="modal-partido" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px">
+    <div style="background:#111;border:1px solid var(--borde);border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">🎾 Registrar partido</div>
+        <button onclick="cerrarModalPartido()" style="background:none;border:none;color:var(--texto-suave);font-size:20px;cursor:pointer">✕</button>
+      </div>
+
+      <div id="alert-partido" style="display:none;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8080"></div>
+
+      <!-- PASO 1: Jugadores -->
+      <div id="partido-paso1">
+        <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px">Paso 1 de 2 — Jugadores</div>
+
+        <!-- Tu pareja -->
+        <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-size:11px;color:var(--verde);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-weight:600">Tu pareja</div>
+          <input type="text" id="buscar-pareja" placeholder="Escribí el nombre de tu pareja..." oninput="buscarJugador('buscar-pareja','resultados-pareja')"
+            style="width:100%;padding:10px 14px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-family:'DM Sans',sans-serif;font-size:13px">
+          <div id="resultados-pareja" style="margin-top:6px"></div>
+          <div id="pareja-seleccionada" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(200,245,90,0.08);border:1px solid rgba(200,245,90,0.2);border-radius:8px;font-size:13px;justify-content:space-between;align-items:center">
+            <span id="pareja-nombre" style="color:var(--verde)">—</span>
+            <button onclick="limpiarSeleccion('pareja')" style="background:none;border:none;color:var(--texto-suave);cursor:pointer;font-size:16px">✕</button>
+          </div>
+        </div>
+
+        <!-- Rivales -->
+        <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:16px">
+          <div style="font-size:11px;color:#ff8080;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;font-weight:600">Rivales</div>
+
+          <div style="margin-bottom:10px">
+            <div style="font-size:11px;color:var(--texto-suave);margin-bottom:6px">Rival 1 (derecha)</div>
+            <input type="text" id="buscar-rival1" placeholder="Nombre del rival 1..." oninput="buscarJugador('buscar-rival1','resultados-rival1')"
+              style="width:100%;padding:10px 14px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-family:'DM Sans',sans-serif;font-size:13px">
+            <div id="resultados-rival1" style="margin-top:6px"></div>
+            <div id="rival1-seleccionado" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:8px;font-size:13px;justify-content:space-between;align-items:center">
+              <span id="rival1-nombre" style="color:#ff8080">—</span>
+              <button onclick="limpiarSeleccion('rival1')" style="background:none;border:none;color:var(--texto-suave);cursor:pointer;font-size:16px">✕</button>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:11px;color:var(--texto-suave);margin-bottom:6px">Rival 2 (revés)</div>
+            <input type="text" id="buscar-rival2" placeholder="Nombre del rival 2..." oninput="buscarJugador('buscar-rival2','resultados-rival2')"
+              style="width:100%;padding:10px 14px;background:var(--negro);border:1px solid var(--borde);border-radius:10px;color:var(--blanco);font-family:'DM Sans',sans-serif;font-size:13px">
+            <div id="resultados-rival2" style="margin-top:6px"></div>
+            <div id="rival2-seleccionado" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:8px;font-size:13px;justify-content:space-between;align-items:center">
+              <span id="rival2-nombre" style="color:#ff8080">—</span>
+              <button onclick="limpiarSeleccion('rival2')" style="background:none;border:none;color:var(--texto-suave);cursor:pointer;font-size:16px">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="partidoPaso2()">Siguiente → Ingresar resultado</button>
+      </div>
+
+      <!-- PASO 2: Resultado -->
+      <div id="partido-paso2" style="display:none">
+        <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px">Paso 2 de 2 — Resultado</div>
+
+        <!-- Resumen jugadores -->
+        <div id="partido-resumen-jugadores" style="background:var(--gris);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px"></div>
+
+        <!-- Sets -->
+        <div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;font-weight:600">Resultado por sets</div>
+
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-size:12px;color:var(--texto-suave);width:40px">Set 1</span>
+            <input type="number" id="set1a" min="0" max="7" placeholder="Tu eq." oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid rgba(200,245,90,0.3);border-radius:8px;color:var(--verde);font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+            <span style="color:var(--texto-suave)">–</span>
+            <input type="number" id="set1b" min="0" max="7" placeholder="Rivales" oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid rgba(255,80,80,0.3);border-radius:8px;color:#ff8080;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="font-size:12px;color:var(--texto-suave);width:40px">Set 2</span>
+            <input type="number" id="set2a" min="0" max="7" placeholder="Tu eq." oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid rgba(200,245,90,0.3);border-radius:8px;color:var(--verde);font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+            <span style="color:var(--texto-suave)">–</span>
+            <input type="number" id="set2b" min="0" max="7" placeholder="Rivales" oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid rgba(255,80,80,0.3);border-radius:8px;color:#ff8080;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:var(--texto-suave);width:40px">Set 3<br><span style="font-size:10px">(si hubo)</span></span>
+            <input type="number" id="set3a" min="0" max="7" placeholder="—" oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid var(--borde);border-radius:8px;color:var(--verde);font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+            <span style="color:var(--texto-suave)">–</span>
+            <input type="number" id="set3b" min="0" max="7" placeholder="—" oninput="calcularImpacto()"
+              style="flex:1;padding:10px;background:var(--negro);border:1px solid var(--borde);border-radius:8px;color:#ff8080;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;text-align:center">
+          </div>
+        </div>
+
+        <!-- Impacto estimado -->
+        <div id="impacto-box" style="display:none;background:rgba(200,245,90,0.05);border:1px solid rgba(200,245,90,0.15);border-radius:12px;padding:14px;margin-bottom:16px">
+          <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px">Impacto estimado en tu Rating MTO</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--texto-suave);margin-bottom:2px">Actual</div>
+              <div id="impacto-actual" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--blanco)">—</div>
+            </div>
+            <div style="font-size:20px;flex:1;text-align:center;color:var(--texto-suave)">→</div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--texto-suave);margin-bottom:2px">Estimado</div>
+              <div id="impacto-nuevo" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">—</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--texto-suave);margin-bottom:2px">Cambio</div>
+              <div id="impacto-delta" style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">—</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:8px">⚠ Estimado. El rating real se actualiza cuando los 4 confirman.</div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="volverPaso1()" style="flex:0.4">← Volver</button>
+          <button class="btn btn-primary" id="btn-confirmar-partido" onclick="confirmarPartido()" style="flex:1">Registrar y notificar →</button>
+        </div>
+      </div>
+
+      <!-- PASO 3: Éxito -->
+      <div id="partido-paso3" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:48px;margin-bottom:16px">✅</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px">¡Partido registrado!</div>
+        <div style="color:var(--texto-suave);font-size:13px;margin-bottom:20px;line-height:1.6">
+          Los otros 3 jugadores recibieron una notificación para confirmar.<br>
+          Tu Rating MTO se actualizará cuando <strong style="color:var(--blanco)">los 4 confirmen</strong>.
+        </div>
+        <button class="btn btn-primary" onclick="cerrarModalPartido()">Entendido →</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- MODAL CREAR TORNEO -->
+  <div id="modal-crear-torneo" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px">
+    <div style="background:#111;border:1px solid var(--borde);border-radius:16px;padding:28px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">🏆 Crear torneo</div>
+        <button onclick="cerrarModalCrearTorneo()" style="background:none;border:none;color:var(--texto-suave);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="alert-crear-torneo" class="alert alert-error"></div>
+
+      <div class="field">
+        <label>Nombre del torneo</label>
+        <input type="text" id="torneo-nombre" placeholder="Ej: Copa Mito Rosario — 4ta categoría">
+      </div>
+      <div class="field">
+        <label>Tipo de torneo</label>
+        <select id="torneo-tipo" onchange="actualizarUiTorneo()">
+          <option value="">Seleccioná el tipo</option>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+          <option value="mixto">Mixto (1 hombre + 1 mujer por pareja)</option>
+          <option value="suma_x">Suma X (suma de ratings ≤ límite)</option>
+        </select>
+      </div>
+      <div class="field" id="campo-suma-x" style="display:none">
+        <label>Suma máxima de ratings</label>
+        <input type="number" id="torneo-suma-max" min="2" max="20" step="0.5" placeholder="Ej: 7 para Suma 7">
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <select id="torneo-categoria">
+          <option value="">Seleccioná la categoría</option>
+          <option value="sin_categoria">Sin categoría / Abierto</option>
+          <option value="8va">8va categoría</option>
+          <option value="7ma">7ma categoría</option>
+          <option value="6ta">6ta categoría</option>
+          <option value="5ta">5ta categoría</option>
+          <option value="4ta">4ta categoría</option>
+          <option value="3ra">3ra categoría</option>
+          <option value="2da">2da categoría</option>
+          <option value="1ra">1ra categoría</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Formato</label>
+        <select id="torneo-formato">
+          <option value="">Seleccioná el formato</option>
+          <option value="zonas">Zonas (grupos de 4, clasifican 2)</option>
+          <option value="eliminacion">Eliminación directa</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="torneo-fecha">
+        </div>
+        <div class="field">
+          <label>Cupos máx. de parejas</label>
+          <input type="number" id="torneo-cupos" min="4" max="64" placeholder="Ej: 16">
+        </div>
+      </div>
+      <div class="field">
+        <label>Ubicación</label>
+        <input type="text" id="torneo-ubicacion" placeholder="Club, dirección o cancha">
+      </div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" id="torneo-descripcion" placeholder="Info adicional para los jugadores">
+      </div>
+      <button class="btn btn-primary" id="btn-crear-torneo" onclick="doCrearTorneo()" style="margin-bottom:10px">Crear torneo</button>
+      <button onclick="cerrarModalCrearTorneo()" class="btn btn-secondary">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- MODAL INSCRIBIRSE A TORNEO -->
+  <div id="modal-inscripcion" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px">
+    <div style="background:#111;border:1px solid var(--borde);border-radius:16px;padding:28px;width:100%;max-width:440px;max-height:92vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Inscribirse al torneo</div>
+        <button onclick="cerrarModalInscripcion()" style="background:none;border:none;color:var(--texto-suave);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div id="inscripcion-torneo-info" style="background:var(--gris);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px"></div>
+      <div id="alert-inscripcion" class="alert alert-error"></div>
+      <div class="field">
+        <label>Tu compañero/a de pareja</label>
+        <input type="text" id="buscar-compañero" placeholder="Escribí el nombre..." oninput="buscarCompañero()">
+        <div id="resultados-compañero" style="margin-top:6px"></div>
+        <div id="compañero-seleccionado" style="display:none;margin-top:8px;padding:10px 14px;background:rgba(200,245,90,0.08);border:1px solid rgba(200,245,90,0.2);border-radius:8px;font-size:13px;justify-content:space-between;align-items:center">
+          <span id="compañero-nombre" style="color:var(--verde)">—</span>
+          <button onclick="limpiarCompañero()" style="background:none;border:none;color:var(--texto-suave);cursor:pointer;font-size:16px">✕</button>
+        </div>
+      </div>
+      <div id="validacion-pareja" style="font-size:12px;margin-bottom:12px;padding:10px 14px;border-radius:8px;display:none"></div>
+      <button class="btn btn-primary" id="btn-inscribirse" onclick="doInscribirse()">Confirmar inscripción</button>
+      <button onclick="cerrarModalInscripcion()" class="btn btn-secondary" style="margin-top:8px">Cancelar</button>
+    </div>
+  </div>
+
+</div><!-- fin .app -->
+
+<script>
+// ════════════════════════════════════════════
+// CONFIGURACIÓN SUPABASE
+// ════════════════════════════════════════════
+const SUPABASE_URL  = 'https://zvgpdvjosjtkqqidykdf.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2Z3Bkdmpvc2p0a3FxaWR5a2RmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTExODMsImV4cCI6MjA5NDEyNzE4M30.D6Q_z_NO_dPkD0uwiEINhpIi9AU9X-lqquMCULsp37k';
+const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const ADMIN_EMAILS = ['vranjican22@gmail.com', 'info@mitodeportes.com.ar'];
+
+// Rating MTO inicial por categoría
+const RATING_INICIAL = {
+  'sin_categoria': 1.0,
+  '8va': 2.0,
+  '7ma': 3.0,
+  '6ta': 4.0,
+  '5ta': 5.0,
+  '4ta': 6.0,
+  '3ra': 7.0,
+  '2da': 8.0,
+  '1ra': 9.0
+};
+
+// ════════════════════════════════════════════
+// DATOS DE PROVINCIAS Y CIUDADES
+// ════════════════════════════════════════════
+const PROV_CIUDADES = {
+  'Buenos Aires': ['La Plata','Mar del Plata','Quilmes','Lomas de Zamora','San Isidro','Tigre','Morón','Lanús','Almirante Brown','Berazategui','Florencio Varela'],
+  'CABA': ['Palermo','Belgrano','Caballito','Villa Crespo','Recoleta','San Telmo','Núñez','Colegiales','Almagro','Boedo','Flores'],
+  'Córdoba': ['Córdoba Capital','Villa Carlos Paz','Río Cuarto','Alta Gracia','Villa María','San Francisco','Cosquín'],
+  'Santa Fe': ['Rosario','Santa Fe Capital','Rafaela','Venado Tuerto','Reconquista','Villa Constitución'],
+  'Mendoza': ['Mendoza Capital','San Rafael','Godoy Cruz','Luján de Cuyo','Maipú'],
+  'Tucumán': ['San Miguel de Tucumán','Tafí Viejo','Banda del Río Salí','Yerba Buena'],
+  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Concepción del Uruguay'],
+  'Salta': ['Salta Capital','San Ramón de la Nueva Orán','Tartagal'],
+  'Misiones': ['Posadas','Oberá','Eldorado'],
+  'Chaco': ['Resistencia','Presidencia Roque Sáenz Peña'],
+  'San Juan': ['San Juan Capital','Rawson','Rivadavia'],
+  'Neuquén': ['Neuquén Capital','San Martín de los Andes','Zapala'],
+  'Río Negro': ['Viedma','Bariloche','General Roca','Cipolletti'],
+  'Formosa': ['Formosa Capital','Clorinda'],
+  'San Luis': ['San Luis Capital','Villa Mercedes'],
+  'Catamarca': ['San Fernando del Valle de Catamarca'],
+  'La Rioja': ['La Rioja Capital'],
+  'Jujuy': ['San Salvador de Jujuy','Palpalá'],
+  'La Pampa': ['Santa Rosa','General Pico'],
+  'Chubut': ['Rawson','Comodoro Rivadavia','Trelew','Puerto Madryn'],
+  'Santa Cruz': ['Río Gallegos','Caleta Olivia'],
+  'Tierra del Fuego': ['Ushuaia','Río Grande'],
+  'Santiago del Estero': ['Santiago del Estero Capital','La Banda'],
+  'Corrientes': ['Corrientes Capital','Goya']
+};
+
+// ════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════
+let rolSeleccionado = null;
+let datosJugadorTemp = {};
+let datosClubTemp = {};
+let datosOrgTemp = {};
+let usuarioGooglePendiente = null;
+
+// ════════════════════════════════════════════
+// NAVEGACIÓN
+// ════════════════════════════════════════════
+function ir(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function mostrarAlerta(id, msg, tipo = 'error') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert alert-${tipo} show`;
+}
+
+function ocultarAlerta(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+function setBtnLoading(id, loading, texto = 'Procesando...') {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span>${texto}`;
+  } else {
+    btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════════
+// CARGAR PROVINCIAS Y CIUDADES
+// ════════════════════════════════════════════
+function inicializarProvincias() {
+  const provIds = ['jug-provincia','club-provincia','org-provincia','gjug-provincia'];
+  provIds.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    Object.keys(PROV_CIUDADES).sort().forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function cargarCiudades(provId, ciudadId) {
+  const prov = document.getElementById(provId)?.value;
+  const sel = document.getElementById(ciudadId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Ciudad</option>';
+  if (!prov || !PROV_CIUDADES[prov]) return;
+  PROV_CIUDADES[prov].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+// ════════════════════════════════════════════
+// SELECCIÓN DE ROL
+// ════════════════════════════════════════════
+function seleccionarRol(rol) {
+  rolSeleccionado = rol;
+  document.querySelectorAll('.role-card:not(.disabled)').forEach(c => c.classList.remove('selected'));
+  document.getElementById('rc-' + rol).classList.add('selected');
+  const btn = document.getElementById('btn-continuar-rol');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+}
+
+function continuarRol() {
+  if (!rolSeleccionado) return;
+  const destino = { jugador: 's-reg-jugador-1', club: 's-reg-club-1', organizador: 's-reg-org-1' };
+  ir(destino[rolSeleccionado]);
+}
+
+// ════════════════════════════════════════════
+// REGISTRO JUGADOR
+// ════════════════════════════════════════════
+function jugPaso1() {
+  ocultarAlerta('alert-jug1');
+  const nombre = document.getElementById('jug-nombre').value.trim();
+  const email  = document.getElementById('jug-email').value.trim();
+  const pass   = document.getElementById('jug-pass').value;
+  const pass2  = document.getElementById('jug-pass2').value;
+
+  if (!nombre) return mostrarAlerta('alert-jug1', 'El nombre es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-jug1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-jug1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (pass !== pass2) return mostrarAlerta('alert-jug1', 'Las contraseñas no coinciden.');
+
+  datosJugadorTemp = { nombre, email, pass };
+  ir('s-reg-jugador-2');
+}
+
+async function doRegistroJugador() {
+  ocultarAlerta('alert-jug2');
+  const genero    = document.getElementById('jug-genero').value;
+  const categoria = document.getElementById('jug-categoria').value;
+  const rol       = document.getElementById('jug-rol').value;
+  const provincia = document.getElementById('jug-provincia').value;
+  const ciudad    = document.getElementById('jug-ciudad').value;
+
+  if (!genero)    return mostrarAlerta('alert-jug2', 'Seleccioná tu género.');
+  if (!categoria) return mostrarAlerta('alert-jug2', 'Seleccioná tu categoría aproximada.');
+  if (!rol)       return mostrarAlerta('alert-jug2', 'Seleccioná tu rol en cancha.');
+  if (!provincia) return mostrarAlerta('alert-jug2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-jug2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-jugador', true, 'Creando cuenta...');
+
+  const rating_inicial = RATING_INICIAL[categoria];
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosJugadorTemp.email,
+    password: datosJugadorTemp.pass,
+    options: { data: { nombre: datosJugadorTemp.nombre } }
+  });
+
+  if (error) {
+    const btn = document.getElementById('btn-reg-jugador');
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Crear mi cuenta'; }
+    const msg = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-jug2', msg);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    const { error: insertError } = await _sb.from('jugadores').insert({
+      id: userId,
+      nombre: datosJugadorTemp.nombre,
+      email: datosJugadorTemp.email,
+      perfil: 'jugador',
+      tipo_usuario: 'jugador',
+      genero,
+      categoria_habilitada: categoria,
+      rol: rol,
+      provincia,
+      ciudad,
+      rating: rating_inicial,
+      rating_mto: rating_inicial,
+      rating_inicial,
+      rating_provisional: true,
+      verificado: false,
+      es_pro: false,
+      activo: true,
+      partidos_jugados: 0,
+      partidos_ganados: 0,
+      mejor_racha: 0,
+      racha_actual: 0
+    });
+    if (insertError) console.error('Insert jugador error:', insertError);
+  }
+
+  setBtnLoading('btn-reg-jugador', false);
+
+  // Mostrar pantalla de éxito
+  document.getElementById('ok-jugador-rating').textContent = `MTO ${rating_inicial.toFixed(1)}`;
+  document.getElementById('ok-jugador-cat').textContent = `${categoria === 'sin_categoria' ? 'Sin categoría' : categoria + ' categoría'} · ${genero}`;
+  ir('s-ok-jugador');
+}
+
+// ════════════════════════════════════════════
+// REGISTRO CLUB
+// ════════════════════════════════════════════
+function clubPaso1() {
+  ocultarAlerta('alert-club1');
+  const nombre      = document.getElementById('club-nombre').value.trim();
+  const email       = document.getElementById('club-email').value.trim();
+  const pass        = document.getElementById('club-pass').value;
+  const responsable = document.getElementById('club-responsable').value.trim();
+
+  if (!nombre)      return mostrarAlerta('alert-club1', 'El nombre del club es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-club1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-club1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (!responsable) return mostrarAlerta('alert-club1', 'El nombre del responsable es obligatorio.');
+
+  datosClubTemp = { nombre, email, pass, responsable };
+  ir('s-reg-club-2');
+}
+
+async function doRegistroClub() {
+  ocultarAlerta('alert-club2');
+  const telefono  = document.getElementById('club-telefono').value.trim();
+  const direccion = document.getElementById('club-direccion').value.trim();
+  const provincia = document.getElementById('club-provincia').value;
+  const ciudad    = document.getElementById('club-ciudad').value;
+
+  if (!telefono)  return mostrarAlerta('alert-club2', 'El teléfono es obligatorio.');
+  if (!direccion) return mostrarAlerta('alert-club2', 'La dirección es obligatoria.');
+  if (!provincia) return mostrarAlerta('alert-club2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-club2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-club', true, 'Creando cuenta...');
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosClubTemp.email,
+    password: datosClubTemp.pass,
+    options: { data: { nombre: datosClubTemp.nombre } }
+  });
+
+  if (error) {
+    const btn2 = document.getElementById('btn-reg-club');
+    if (btn2) { btn2.disabled = false; btn2.innerHTML = 'Crear cuenta de club'; }
+    const msg2 = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-club2', msg2);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    await _sb.from('clubes').insert({
+      id: userId,
+      nombre: datosClubTemp.nombre,
+      email: datosClubTemp.email,
+      perfil: 'club',
+      nombre_responsable: datosClubTemp.responsable,
+      telefono,
+      direccion,
+      provincia,
+      ciudad,
+      verificado: false
+    });
+  }
+
+  setBtnLoading('btn-reg-club', false);
+  ir('s-ok-club');
+}
+
+// ════════════════════════════════════════════
+// REGISTRO ORGANIZADOR
+// ════════════════════════════════════════════
+function orgPaso1() {
+  ocultarAlerta('alert-org1');
+  const nombre = document.getElementById('org-nombre').value.trim();
+  const email  = document.getElementById('org-email').value.trim();
+  const pass   = document.getElementById('org-pass').value;
+  const tipo   = document.getElementById('org-tipo').value;
+
+  if (!nombre) return mostrarAlerta('alert-org1', 'El nombre es obligatorio.');
+  if (!email || !email.includes('@')) return mostrarAlerta('alert-org1', 'Ingresá un email válido.');
+  if (pass.length < 8) return mostrarAlerta('alert-org1', 'La contraseña debe tener al menos 8 caracteres.');
+  if (!tipo)   return mostrarAlerta('alert-org1', 'Seleccioná tu tipo de organizador.');
+
+  datosOrgTemp = { nombre, email, pass, tipo };
+  ir('s-reg-org-2');
+}
+
+async function doRegistroOrg() {
+  ocultarAlerta('alert-org2');
+  const telefono = document.getElementById('org-telefono').value.trim();
+  const provincia = document.getElementById('org-provincia').value;
+  const ciudad    = document.getElementById('org-ciudad').value;
+
+  if (!telefono)  return mostrarAlerta('alert-org2', 'El teléfono es obligatorio.');
+  if (!provincia) return mostrarAlerta('alert-org2', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-org2', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-reg-org', true, 'Creando cuenta...');
+
+  const { data, error } = await _sb.auth.signUp({
+    email: datosOrgTemp.email,
+    password: datosOrgTemp.pass,
+    options: { data: { nombre: datosOrgTemp.nombre } }
+  });
+
+  if (error) {
+    const btn3 = document.getElementById('btn-reg-org');
+    if (btn3) { btn3.disabled = false; btn3.innerHTML = 'Crear cuenta'; }
+    const msg3 = (error.message === 'User already registered' || (error.message || '').includes('already'))
+      ? 'Este email ya tiene una cuenta. Usá otro email o ingresá desde Login.'
+      : error.message;
+    return mostrarAlerta('alert-org2', msg3);
+  }
+
+  const userId = data.user?.id;
+  if (userId) {
+    await _sb.from('organizadores').insert({
+      id: userId,
+      nombre: datosOrgTemp.nombre,
+      email: datosOrgTemp.email,
+      perfil: 'organizador',
+      tipo_organizador: datosOrgTemp.tipo,
+      telefono,
+      provincia,
+      ciudad,
+      verificado: false
+    });
+  }
+
+  setBtnLoading('btn-reg-org', false);
+  ir('s-ok-org');
+}
+
+// ════════════════════════════════════════════
+// LOGIN CON EMAIL
+// ════════════════════════════════════════════
+async function doLogin() {
+  ocultarAlerta('alert-login');
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+
+  if (!email) return mostrarAlerta('alert-login', 'Ingresá tu email.');
+  if (!pass)  return mostrarAlerta('alert-login', 'Ingresá tu contraseña.');
+
+  setBtnLoading('btn-login', true, 'Ingresando...');
+
+  const { data, error } = await _sb.auth.signInWithPassword({ email, password: pass });
+
+  setBtnLoading('btn-login', false);
+
+  if (error) {
+    return mostrarAlerta('alert-login', 'Email o contraseña incorrectos.');
+  }
+
+  await redirigirSegunPerfil(data.user);
+}
+
+// ════════════════════════════════════════════
+// LOGIN CON GOOGLE
+// ════════════════════════════════════════════
+async function loginGoogle() {
+  const { error } = await _sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  });
+  if (error) alert('Error al conectar con Google: ' + error.message);
+}
+
+// ════════════════════════════════════════════
+// COMPLETAR PERFIL GOOGLE (JUGADOR)
+// ════════════════════════════════════════════
+async function completarPerfilGoogle() {
+  ocultarAlerta('alert-gjug');
+  const genero    = document.getElementById('gjug-genero').value;
+  const categoria = document.getElementById('gjug-categoria').value;
+  const rol       = document.getElementById('gjug-rol').value;
+  const provincia = document.getElementById('gjug-provincia').value;
+  const ciudad    = document.getElementById('gjug-ciudad').value;
+
+  if (!genero)    return mostrarAlerta('alert-gjug', 'Seleccioná tu género.');
+  if (!categoria) return mostrarAlerta('alert-gjug', 'Seleccioná tu categoría.');
+  if (!rol)       return mostrarAlerta('alert-gjug', 'Seleccioná tu rol en cancha.');
+  if (!provincia) return mostrarAlerta('alert-gjug', 'Seleccioná tu provincia.');
+  if (!ciudad)    return mostrarAlerta('alert-gjug', 'Seleccioná tu ciudad.');
+
+  setBtnLoading('btn-gjug', true, 'Guardando...');
+
+  const user = usuarioGooglePendiente;
+  const rating_inicial = RATING_INICIAL[categoria];
+
+  const { error: gInsertError } = await _sb.from('jugadores').insert({
+    id: user.id,
+    nombre: user.user_metadata?.full_name || user.email,
+    email: user.email,
+    perfil: 'jugador',
+    tipo_usuario: 'jugador',
+    genero,
+    categoria_habilitada: categoria,
+    rol: rol,
+    provincia,
+    ciudad,
+    rating: rating_inicial,
+    rating_mto: rating_inicial,
+    rating_inicial,
+    rating_provisional: true,
+    verificado: false,
+    es_pro: false,
+    activo: true,
+    partidos_jugados: 0,
+    partidos_ganados: 0,
+    mejor_racha: 0,
+    racha_actual: 0
+  });
+  if (gInsertError) console.error('Insert Google jugador error:', gInsertError);
+
+  setBtnLoading('btn-gjug', false);
+  document.getElementById('ok-jugador-rating').textContent = `MTO ${rating_inicial.toFixed(1)}`;
+  document.getElementById('ok-jugador-cat').textContent = `${categoria === 'sin_categoria' ? 'Sin categoría' : categoria + ' categoría'} · ${genero}`;
+  ir('s-ok-jugador');
+}
+
+// ════════════════════════════════════════════
+// RECUPERAR CONTRASEÑA
+// ════════════════════════════════════════════
+async function doRecuperar() {
+  ocultarAlerta('alert-recuperar');
+  ocultarAlerta('alert-recuperar-ok');
+  const email = document.getElementById('recuperar-email').value.trim();
+  if (!email) return mostrarAlerta('alert-recuperar', 'Ingresá tu email.');
+
+  setBtnLoading('btn-recuperar', true, 'Enviando...');
+
+  const { error } = await _sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+
+  setBtnLoading('btn-recuperar', false);
+
+  if (error) return mostrarAlerta('alert-recuperar', error.message);
+  mostrarAlerta('alert-recuperar-ok', '✓ Revisá tu email. Te enviamos el enlace para restablecer tu contraseña.', 'success');
+  document.getElementById('btn-recuperar').textContent = 'Reenviar enlace';
+}
+
+// ════════════════════════════════════════════
+// PANEL JUGADOR — CARGAR DATOS
+// ════════════════════════════════════════════
+
+const CATEGORIAS_ORDEN = ['sin_categoria','8va','7ma','6ta','5ta','4ta','3ra','2da','1ra'];
+const CATEGORIAS_LABEL = {
+  'sin_categoria':'Sin categoría','8va':'8va','7ma':'7ma','6ta':'6ta',
+  '5ta':'5ta','4ta':'4ta','3ra':'3ra','2da':'2da','1ra':'1ra'
+};
+const UMBRAL_SIGUIENTE = {
+  'sin_categoria':2.0,'8va':3.0,'7ma':4.0,'6ta':5.0,
+  '5ta':6.0,'4ta':7.0,'3ra':8.0,'2da':9.0,'1ra':10.0
+};
+
+function getSiguienteCategoria(cat) {
+  const idx = CATEGORIAS_ORDEN.indexOf(cat);
+  if (idx === -1 || idx === CATEGORIAS_ORDEN.length - 1) return null;
+  return CATEGORIAS_ORDEN[idx + 1];
+}
+
+async function cargarPanelJugador(jugador) {
+  const rating = parseFloat(jugador.rating_mto) || 0;
+  const cat = jugador.categoria_habilitada || 'sin_categoria';
+  const genero = jugador.genero || '—';
+  const nombre = jugador.nombre || '—';
+
+  // Avatar iniciales
+  const iniciales = nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+
+  // Sidebar
+  const sbAvatar = document.getElementById('jug-sb-avatar');
+  if (sbAvatar) sbAvatar.textContent = iniciales;
+  document.getElementById('panel-jug-nombre').textContent = nombre;
+  document.getElementById('panel-jug-cat').textContent =
+    `${CATEGORIAS_LABEL[cat] || cat} · ${genero} · ${jugador.ciudad || ''}`;
+
+  // Rating MTO grande
+  document.getElementById('panel-jug-rating').textContent = rating.toFixed(1);
+  const sbRating = document.getElementById('jug-sb-rating');
+  if (sbRating) sbRating.textContent = rating.toFixed(1);
+  const heroRating = document.getElementById('jug-hero-rating');
+  if (heroRating) heroRating.textContent = rating.toFixed(1);
+  const heroMeta = document.getElementById('jug-hero-meta');
+  if (heroMeta) heroMeta.textContent = `${CATEGORIAS_LABEL[cat] || cat} · ${genero} · ${jugador.ciudad || ''}`;
+  const provBadge = document.getElementById('jug-provisional-badge');
+  if (jugador.rating_provisional) provBadge.style.display = 'inline-block';
+  else provBadge.style.display = 'none';
+
+  // Barra de progreso hacia siguiente categoría
+  const sigCat = getSiguienteCategoria(cat);
+  const umbral = UMBRAL_SIGUIENTE[cat];
+  const umbralAnterior = RATING_INICIAL[cat] || 0;
+  document.getElementById('jug-cat-actual').textContent =
+    `${CATEGORIAS_LABEL[cat] || cat} (${rating.toFixed(1)})`;
+
+  if (sigCat && umbral) {
+    const pct = Math.min(100, Math.max(0,
+      ((rating - umbralAnterior) / (umbral - umbralAnterior)) * 100
+    ));
+    document.getElementById('jug-cat-siguiente').textContent =
+      `→ ${CATEGORIAS_LABEL[sigCat]} (${umbral.toFixed(1)})`;
+    document.getElementById('jug-progreso-bar').style.width = pct.toFixed(0) + '%';
+    const falta = (umbral - rating).toFixed(1);
+    document.getElementById('jug-progreso-txt').textContent =
+      falta > 0 ? `Falta ${falta} pts para ${CATEGORIAS_LABEL[sigCat]}` : '¡Listo para subir de categoría!';
+  } else {
+    document.getElementById('jug-cat-siguiente').textContent = '🏆 Categoría máxima';
+    document.getElementById('jug-progreso-bar').style.width = '100%';
+    document.getElementById('jug-progreso-txt').textContent = 'Nivel élite';
+  }
+
+  // Estadísticas
+  document.getElementById('jug-stat-partidos').textContent = jugador.partidos_jugados || 0;
+  document.getElementById('jug-stat-victorias').textContent = jugador.partidos_ganados || 0;
+  document.getElementById('jug-stat-racha').textContent = jugador.mejor_racha || 0;
+
+  // Ranking — contar jugadores con más rating del mismo género
+  try {
+    const { count: rankProv } = await _sb.from('jugadores')
+      .select('*', { count: 'exact', head: true })
+      .eq('genero', genero)
+      .eq('provincia', jugador.provincia)
+      .gt('rating_mto', rating);
+    document.getElementById('jug-ranking-prov').textContent = '#' + ((rankProv || 0) + 1);
+    document.getElementById('jug-ranking-prov-label').textContent = jugador.provincia || 'Provincia';
+
+    const { count: rankPais } = await _sb.from('jugadores')
+      .select('*', { count: 'exact', head: true })
+      .eq('genero', genero)
+      .gt('rating_mto', rating);
+    document.getElementById('jug-ranking-pais').textContent = '#' + ((rankPais || 0) + 1);
+  } catch(e) {
+    document.getElementById('jug-ranking-prov').textContent = '#—';
+    document.getElementById('jug-ranking-pais').textContent = '#—';
+  }
+
+  // Últimos partidos
+  try {
+    const { data: partidos } = await _sb.from('partidos')
+      .select('*')
+      .or(`jugador1_id.eq.${jugador.id},jugador2_id.eq.${jugador.id},jugador3_id.eq.${jugador.id},jugador4_id.eq.${jugador.id}`)
+      .eq('confirmado', true)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    const lista = document.getElementById('jug-partidos-lista');
+    if (partidos && partidos.length > 0) {
+      lista.innerHTML = partidos.map(p => {
+        const esPareja1 = p.jugador1_id === jugador.id || p.jugador2_id === jugador.id;
+        const gano = (esPareja1 && p.ganador === 'AB') || (!esPareja1 && p.ganador === 'CD');
+        const delta = esPareja1
+          ? (p.jugador1_id === jugador.id ? p.match_rating_j1 : p.match_rating_j2)
+          : (p.jugador3_id === jugador.id ? p.match_rating_j3 : p.match_rating_j4);
+        const fecha = new Date(p.created_at).toLocaleDateString('es-AR', {day:'numeric',month:'short'});
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borde)">
+          <div>
+            <span style="font-size:13px;color:var(--blanco)">${fecha}</span>
+            <span style="font-size:11px;color:var(--texto-suave);margin-left:8px">${p.set1_a}-${p.set1_b} / ${p.set2_a}-${p.set2_b}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;padding:2px 8px;border-radius:10px;${gano ? 'background:rgba(200,245,90,0.1);color:var(--verde)' : 'background:rgba(255,77,77,0.1);color:#ff8080'}">${gano ? 'Victoria' : 'Derrota'}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { /* sin partidos */ }
+}
+
+// ════════════════════════════════════════════
+// REDIRECCIÓN SEGÚN PERFIL
+// ════════════════════════════════════════════
+async function redirigirSegunPerfil(user) {
+  if (!user) return ir('s-inicio');
+
+  // Admin por email hardcodeado (migrar a Supabase en futura versión)
+  if (ADMIN_EMAILS.includes(user.email)) {
+    ir('s-panel-admin');
+    cargarPanelAdmin();
+    return;
+  }
+
+  // Buscar en tabla jugadores
+  const { data: jugador } = await _sb
+    .from('jugadores').select('*').eq('id', user.id).single();
+
+  if (jugador) {
+    cargarPanelJugador(jugador);
+    return ir('s-panel-jugador');
+  }
+
+  // Buscar en tabla clubes
+  const { data: club } = await _sb
+    .from('clubes').select('*').eq('id', user.id).single();
+
+  if (club) {
+    ir('s-panel-club');
+    cargarPanelClub(club);
+    return;
+  }
+
+  // Buscar en tabla organizadores
+  const { data: org } = await _sb
+    .from('organizadores').select('*').eq('id', user.id).single();
+
+  if (org) {
+    ir('s-panel-org');
+    cargarPanelOrg(org);
+    return;
+  }
+
+  // Usuario Google nuevo sin perfil — mostrar selector
+  usuarioGooglePendiente = user;
+  ir('s-elegir-rol');
+}
+
+function irAlPanel() {
+  _sb.auth.getUser().then(({ data }) => {
+    if (data?.user) redirigirSegunPerfil(data.user);
+    else ir('s-inicio');
+  });
+}
+
+// ════════════════════════════════════════════
+// LOGOUT
+// ════════════════════════════════════════════
+async function doLogout() {
+  await _sb.auth.signOut();
+  rolSeleccionado = null;
+  datosJugadorTemp = {};
+  datosClubTemp = {};
+  datosOrgTemp = {};
+  usuarioGooglePendiente = null;
+  ir('s-inicio');
+}
+
+// ════════════════════════════════════════════
+// INIT — verificar sesión activa al cargar
+// ════════════════════════════════════════════
+// ════════════════════════════════════════════
+// PANEL ADMIN — LÓGICA
+// ════════════════════════════════════════════
+
+let todosLosJugadores = [];
+
+async function cargarPanelAdmin() {
+  // Fecha actual
+  const dateEl = document.getElementById('admin-topbar-date');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  // Nombre del admin en sidebar
+  const { data: { user: adminUser } } = await _sb.auth.getUser();
+  if (adminUser) {
+    const adminName = adminUser.user_metadata?.full_name || adminUser.email?.split('@')[0] || 'Administrador';
+    const adminNameEl = document.querySelector('#sidebar-admin .sidebar-user-name');
+    if (adminNameEl) adminNameEl.textContent = adminName;
+    const adminAvatarEl = document.querySelector('#sidebar-admin .sidebar-user-avatar');
+    if (adminAvatarEl) adminAvatarEl.textContent = adminName.substring(0,2).toUpperCase();
+  }
+
+  // KPIs
+  const { count: totalJug } = await _sb.from('jugadores')
+    .select('*', { count: 'exact', head: true });
+  const { count: totalClub } = await _sb.from('clubes')
+    .select('*', { count: 'exact', head: true });
+  const { count: totalMasc } = await _sb.from('jugadores')
+    .select('*', { count: 'exact', head: true }).eq('genero', 'masculino');
+  const { count: totalFem } = await _sb.from('jugadores')
+    .select('*', { count: 'exact', head: true }).eq('genero', 'femenino');
+
+  document.getElementById('kpi-jugadores').textContent = totalJug || 0;
+  document.getElementById('kpi-clubes').textContent = totalClub || 0;
+  document.getElementById('kpi-masculinos').textContent = totalMasc || 0;
+  document.getElementById('kpi-femeninos').textContent = totalFem || 0;
+
+  // Top 5 ranking masculino
+  const { data: topMasc } = await _sb.from('jugadores')
+    .select('nombre, rating_mto, ciudad, categoria_habilitada')
+    .eq('genero', 'masculino')
+    .order('rating_mto', { ascending: false })
+    .limit(5);
+
+  const { data: topFem } = await _sb.from('jugadores')
+    .select('nombre, rating_mto, ciudad, categoria_habilitada')
+    .eq('genero', 'femenino')
+    .order('rating_mto', { ascending: false })
+    .limit(5);
+
+  const medalColors = ['#FFD700','#C0C0C0','#CD7F32'];
+  const renderTop = (lista, elId) => {
+    const el = document.getElementById(elId);
+    if (!lista || lista.length === 0) {
+      el.innerHTML = '<div style="color:var(--texto-suave);font-size:13px;text-align:center;padding:12px">Sin jugadores todavía</div>';
+      return;
+    }
+    el.innerHTML = lista.map((j, i) => `
+      <div class="rank-row">
+        <div class="rank-num" style="color:${medalColors[i] || 'var(--texto-suave)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+        <div class="rank-info">
+          <div class="rank-name">${j.nombre || '—'}</div>
+          <div class="rank-meta">${j.ciudad || ''} · ${j.categoria_habilitada || ''}</div>
+        </div>
+        <div class="rank-mto">${(j.rating_mto||0).toFixed(1)}</div>
+      </div>`).join('');
+  };
+
+  renderTop(topMasc, 'admin-top-masc');
+  renderTop(topFem, 'admin-top-fem');
+
+  // Cargar todos los jugadores para la tab
+  const { data: jugadores } = await _sb.from('jugadores')
+    .select('*').order('rating_mto', { ascending: false });
+  todosLosJugadores = jugadores || [];
+  renderListaJugadores(todosLosJugadores);
+
+  // Cargar clubes
+  const { data: clubes } = await _sb.from('clubes').select('*').order('nombre');
+  renderListaClubes(clubes || []);
+}
+
+function adminTab(tab) {
+  const tabs = ['dashboard','jugadores','clubes-tab','torneos-tab'];
+  tabs.forEach(t => {
+    const el = document.getElementById('admin-' + t);
+    if (el) el.style.display = 'none';
+  });
+  const navIds = ['dashboard','jugadores','clubes','torneos-admin'];
+  navIds.forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    if (btn) btn.classList.remove('active');
+  });
+  const el = document.getElementById('admin-' + tab);
+  if (el) el.style.display = 'block';
+  const tabToNavId = { 'dashboard':'dashboard', 'jugadores':'jugadores', 'clubes-tab':'clubes', 'torneos-tab':'torneos-admin' };
+  const activeBtn = document.getElementById('tab-' + (tabToNavId[tab] || tab));
+  if (activeBtn) activeBtn.classList.add('active');
+  if (tab === 'torneos-tab') cargarTorneosAdmin();
+  const titles = { dashboard: 'Dashboard', jugadores: 'Jugadores', 'clubes-tab': 'Clubes', 'torneos-tab': 'Torneos' };
+  const topbar = document.getElementById('admin-topbar-title');
+  if (topbar) topbar.textContent = titles[tab] || 'Dashboard';
+  closeSidebar('admin');
+}
+
+function renderListaJugadores(lista) {
+  const count = document.getElementById('admin-jug-count');
+  if (count) count.textContent = `${lista?.length || 0} jugadores`;
+  if (!lista || lista.length === 0) {
+    const tbody = document.getElementById('admin-lista-jugadores');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--texto-suave);padding:24px">Sin jugadores que coincidan</td></tr>';
+    const cards = document.getElementById('admin-lista-jugadores-mobile');
+    if (cards) cards.innerHTML = '<div style="color:var(--texto-suave);font-size:13px;text-align:center;padding:20px">Sin jugadores</div>';
+    return;
+  }
+
+  // TABLA DESKTOP
+  const tbody = document.getElementById('admin-lista-jugadores');
+  if (tbody) {
+    tbody.innerHTML = lista.map(j => {
+      const tieneData = j.genero && j.categoria_habilitada;
+      const nombreSafe = (j.nombre||'').replace(/"/g,'&quot;');
+      return `<tr data-id="${j.id}">
+        <td>
+          <div style="font-weight:500">${j.nombre || '—'} ${!tieneData ? '<span style="font-size:10px;padding:1px 6px;background:rgba(255,77,77,0.1);color:#ff8080;border-radius:4px">incompleto</span>' : ''}</div>
+          <div style="font-size:11px;color:var(--texto-suave)">${j.email || ''}</div>
+        </td>
+        <td style="font-size:12px">${j.genero || '<span style="color:#ff8080">⚠ sin dato</span>'}</td>
+        <td style="font-size:12px">${j.categoria_habilitada || '<span style="color:#ff8080">⚠ sin dato</span>'}</td>
+        <td style="font-size:12px">${j.ciudad || '—'}</td>
+        <td>
+          <span class="mto-badge">${(j.rating_mto||0).toFixed(1)}</span>
+          ${j.rating_provisional ? '<div style="font-size:10px;color:#ffb432">provisional</div>' : ''}
+        </td>
+        <td>
+          <span style="font-size:11px;color:${j.verificado ? 'var(--verde)' : '#ffb432'}">${j.verificado ? '✓ verificado' : '⏳ pendiente'}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="action-btn" data-action="editar" data-id="${j.id}" title="Editar">✏️ Editar</button>
+            <button class="action-btn" data-action="verificar" data-id="${j.id}" data-verificado="${j.verificado}" style="color:${j.verificado ? '#ffb432' : 'var(--verde)'}" title="${j.verificado ? 'Des-verificar' : 'Verificar'}">${j.verificado ? '⏳' : '✓'}</button>
+            <button class="action-btn danger" data-action="eliminar" data-id="${j.id}" data-nombre="${nombreSafe}" title="Eliminar">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Event delegation para los botones
+    tbody.onclick = function(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'editar') abrirModalEditar(id);
+      else if (action === 'verificar') {
+        const verificado = btn.dataset.verificado === 'true';
+        toggleVerificar(id, !verificado);
+      }
+      else if (action === 'eliminar') abrirModalEliminar(id, btn.dataset.nombre);
+    };
+  }
+
+  // CARDS MOBILE
+  const cards = document.getElementById('admin-lista-jugadores-mobile');
+  if (cards) {
+    cards.innerHTML = lista.map(j => {
+      const tieneData = j.genero && j.categoria_habilitada;
+      return `<div style="background:var(--gris);border-radius:10px;padding:14px;border:1px solid var(--borde)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-size:13px;font-weight:500">${j.nombre || '—'} ${!tieneData ? '<span style="font-size:10px;padding:1px 6px;background:rgba(255,77,77,0.1);color:#ff8080;border-radius:4px">incompleto</span>' : ''}</div>
+            <div style="font-size:11px;color:var(--texto-suave)">${j.email || ''}</div>
+            <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">${j.genero || '⚠'} · ${j.categoria_habilitada || '⚠'} · ${j.ciudad || '—'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--verde)">${(j.rating_mto||0).toFixed(1)}</div>
+            ${j.rating_provisional ? '<div style="font-size:10px;color:#ffb432">provisional</div>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px" data-row-id="${j.id}" data-row-nombre="${(j.nombre||'').replace(/"/g,'&quot;')}" data-row-verificado="${j.verificado}">
+          <button class="action-btn" data-action="editar" data-id="${j.id}">✏️ Editar</button>
+          <button class="action-btn" data-action="verificar" data-id="${j.id}" data-verificado="${j.verificado}" style="color:${j.verificado ? '#ffb432' : 'var(--verde)'}">${j.verificado ? '⏳ Des-verificar' : '✓ Verificar'}</button>
+          <button class="action-btn danger" data-action="eliminar" data-id="${j.id}" data-nombre="${(j.nombre||'').replace(/"/g,'&quot;')}">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Event delegation mobile
+    cards.onclick = function(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      if (action === 'editar') abrirModalEditar(id);
+      else if (action === 'verificar') {
+        const verificado = btn.dataset.verificado === 'true';
+        toggleVerificar(id, !verificado);
+      }
+      else if (action === 'eliminar') abrirModalEliminar(id, btn.dataset.nombre);
+    };
+  }
+}
+
+function renderListaClubes(lista) {
+  const el = document.getElementById('admin-lista-clubes');
+  if (!lista || lista.length === 0) {
+    el.innerHTML = '<div style="color:var(--texto-suave);font-size:13px;text-align:center;padding:20px">Sin clubes registrados</div>';
+    return;
+  }
+  el.innerHTML = lista.map(c => `
+    <div style="background:var(--gris);border-radius:10px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;color:var(--blanco);font-weight:500">${c.nombre || '—'}</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">${c.ciudad || ''}, ${c.provincia || ''}</div>
+          <div style="font-size:11px;color:var(--texto-suave)">${c.nombre_responsable || ''} · ${c.telefono || ''}</div>
+        </div>
+        <div>
+          <span style="font-size:10px;padding:3px 8px;border-radius:10px;${c.verificado ? 'background:rgba(200,245,90,0.1);color:var(--verde)' : 'background:rgba(255,180,50,0.1);color:#ffb432'}">${c.verificado ? '✓ verificado' : '⏳ pendiente'}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filtrarJugadores() {
+  const q = (document.getElementById('admin-buscar-jug')?.value || '').toLowerCase();
+  const genero = document.getElementById('filtro-genero')?.value || '';
+  const cat = document.getElementById('filtro-categoria')?.value || '';
+  const filtrados = todosLosJugadores.filter(j =>
+    ((j.nombre||'').toLowerCase().includes(q) || (j.email||'').toLowerCase().includes(q)) &&
+    (!genero || j.genero === genero) &&
+    (!cat || j.categoria_habilitada === cat)
+  );
+  renderListaJugadores(filtrados);
+}
+
+async function toggleVerificar(id, verificado) {
+  await _sb.from('jugadores').update({ verificado }).eq('id', id);
+  todosLosJugadores = todosLosJugadores.map(j =>
+    j.id === id ? { ...j, verificado } : j
+  );
+  filtrarJugadores();
+}
+
+function abrirModalEditar(id) {
+  const j = todosLosJugadores.find(x => x.id === id);
+  if (!j) { console.error('Jugador no encontrado:', id); return; }
+  document.getElementById('edit-id').value = j.id;
+  document.getElementById('edit-nombre').value = j.nombre || '';
+  document.getElementById('edit-genero').value = j.genero || '';
+  document.getElementById('edit-categoria').value = j.categoria_habilitada || 'sin_categoria';
+  document.getElementById('edit-rating').value = j.rating_mto || 0;
+  document.getElementById('edit-provincia').value = j.provincia || '';
+  document.getElementById('edit-ciudad').value = j.ciudad || '';
+  document.getElementById('edit-rol').value = j.rol || '';
+  const alertEl = document.getElementById('edit-alert');
+  if (alertEl) alertEl.classList.remove('show');
+  const modal = document.getElementById('modal-editar');
+  if (modal) { modal.style.display = 'flex'; }
+  else { console.error('Modal no encontrado'); }
+}
+
+function cerrarModal() {
+  document.getElementById('modal-editar').style.display = 'none';
+}
+
+async function guardarEdicion() {
+  const id = document.getElementById('edit-id').value;
+  const nombre = document.getElementById('edit-nombre').value.trim();
+  const genero = document.getElementById('edit-genero').value;
+  const categoria = document.getElementById('edit-categoria').value;
+  const ratingInput = parseFloat(document.getElementById('edit-rating').value);
+  const provincia = document.getElementById('edit-provincia').value.trim();
+  const ciudad = document.getElementById('edit-ciudad').value.trim();
+  const rol = document.getElementById('edit-rol').value;
+
+  if (!nombre) {
+    document.getElementById('edit-alert').textContent = 'El nombre es obligatorio.';
+    document.getElementById('edit-alert').classList.add('show');
+    return;
+  }
+  if (isNaN(ratingInput) || ratingInput < 0 || ratingInput > 10) {
+    document.getElementById('edit-alert').textContent = 'El rating debe ser entre 0 y 10.';
+    document.getElementById('edit-alert').classList.add('show');
+    return;
+  }
+
+  // Lógica Opción 2: si el jugador tenía rating 0.0 y se le asigna una categoría,
+  // el sistema asigna automáticamente el rating inicial de esa categoría.
+  // Si el admin ingresó manualmente un valor distinto de 0, se respeta ese valor.
+  const jugadorActual = todosLosJugadores.find(j => j.id === id);
+  let ratingFinal = ratingInput;
+
+  if (jugadorActual) {
+    const ratingActual = parseFloat(jugadorActual.rating_mto) || 0;
+    const categoriaAnterior = jugadorActual.categoria_habilitada;
+    const ratingInicialCategoria = RATING_INICIAL[categoria] || 1.0;
+
+    // Si el rating actual es 0 (o casi 0) y se asignó una categoría nueva o diferente,
+    // usar el rating inicial de esa categoría en lugar de 0
+    if (ratingActual === 0 && ratingInput === 0 && categoria !== 'sin_categoria') {
+      ratingFinal = ratingInicialCategoria;
+      // Actualizar el campo visual del modal
+      document.getElementById('edit-rating').value = ratingFinal;
+    }
+
+    // Si el admin cambió la categoría y el rating actual coincide exactamente
+    // con el inicial de la categoría anterior, actualizar al inicial de la nueva
+    if (categoriaAnterior !== categoria &&
+        ratingActual === (RATING_INICIAL[categoriaAnterior] || 0) &&
+        ratingInput === ratingActual) {
+      ratingFinal = ratingInicialCategoria;
+      document.getElementById('edit-rating').value = ratingFinal;
+    }
+  }
+
+  const btn = document.getElementById('btn-guardar-edit');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const { error } = await _sb.from('jugadores').update({
+    nombre, genero,
+    categoria_habilitada: categoria,
+    rating_mto: ratingFinal,
+    rating: ratingFinal,
+    rating_inicial: ratingFinal === (RATING_INICIAL[categoria] || 0) ? ratingFinal : (jugadorActual?.rating_inicial || ratingFinal),
+    rating_provisional: (jugadorActual?.partidos_jugados || 0) === 0,
+    provincia, ciudad, rol
+  }).eq('id', id);
+
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+
+  if (error) {
+    document.getElementById('edit-alert').textContent = 'Error al guardar: ' + error.message;
+    document.getElementById('edit-alert').classList.add('show');
+    return;
+  }
+
+  todosLosJugadores = todosLosJugadores.map(j =>
+    j.id === id ? { ...j, nombre, genero, categoria_habilitada: categoria,
+      rating_mto: ratingFinal, rating: ratingFinal, provincia, ciudad, rol } : j
+  );
+  cerrarModal();
+  filtrarJugadores();
+  cargarPanelAdmin();
+}
+
+function abrirModalEliminar(id, nombre) {
+  document.getElementById('eliminar-id').value = id;
+  document.getElementById('eliminar-nombre-txt').textContent = `¿Eliminar a "${nombre}"? Esta acción no se puede deshacer.`;
+  document.getElementById('modal-eliminar').style.display = 'flex';
+}
+
+function cerrarModalEliminar() {
+  document.getElementById('modal-eliminar').style.display = 'none';
+}
+
+async function confirmarEliminar() {
+  const id = document.getElementById('eliminar-id').value;
+  await _sb.from('jugadores').delete().eq('id', id);
+  todosLosJugadores = todosLosJugadores.filter(j => j.id !== id);
+  cerrarModalEliminar();
+  filtrarJugadores();
+  cargarPanelAdmin();
+}
+
+function exportarCSV() {
+  const lista = todosLosJugadores;
+  if (!lista.length) return alert('No hay jugadores para exportar.');
+  const cols = ['nombre','email','genero','categoria_habilitada','rating_mto','provincia','ciudad','rol','verificado','partidos_jugados','partidos_ganados'];
+  const header = cols.join(',');
+  const rows = lista.map(j => cols.map(c => `"${(j[c]??'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'jugadores_mito.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ════════════════════════════════════════════
+// PANEL CLUB — LÓGICA
+// ════════════════════════════════════════════
+
+async function cargarPanelClub(club) {
+  document.getElementById('panel-club-nombre').textContent = club.nombre || '—';
+  document.getElementById('panel-club-ubicacion').textContent =
+    `${club.ciudad || ''}, ${club.provincia || ''}`;
+  document.getElementById('club-info-responsable').textContent = club.nombre_responsable || '—';
+  document.getElementById('club-info-telefono').textContent = club.telefono || '—';
+  document.getElementById('club-info-direccion').textContent = club.direccion || '—';
+
+  // Jugadores miembros (que tienen este club_id o que pusieron este club)
+  const { data: miembros } = await _sb.from('jugadores')
+    .select('nombre, rating_mto, genero, categoria_habilitada')
+    .eq('club_id', club.id)
+    .order('rating_mto', { ascending: false });
+
+  document.getElementById('club-kpi-miembros').textContent = miembros?.length || 0;
+
+  if (miembros && miembros.length > 0) {
+    const avgRating = (miembros.reduce((s,j) => s + (j.rating_mto||0), 0) / miembros.length).toFixed(1);
+    document.getElementById('club-kpi-rating').textContent = avgRating;
+
+    document.getElementById('club-miembros-lista').innerHTML = miembros.map(j => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--borde)">
+        <div>
+          <div style="font-size:13px;color:var(--blanco)">${j.nombre || '—'}</div>
+          <div style="font-size:11px;color:var(--texto-suave)">${j.categoria_habilitada || ''} · ${j.genero || ''}</div>
+        </div>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--verde)">${(j.rating_mto||0).toFixed(1)}</span>
+      </div>`).join('');
+  } else {
+    document.getElementById('club-kpi-rating').textContent = '—';
+  }
+
+  // Torneos del club
+  const { count: torneos } = await _sb.from('torneos')
+    .select('*', { count: 'exact', head: true })
+    .eq('club_id', club.id);
+  document.getElementById('club-kpi-torneos').textContent = torneos || 0;
+}
+
+// ════════════════════════════════════════════
+// PANEL ORGANIZADOR — LÓGICA
+// ════════════════════════════════════════════
+
+async function cargarPanelOrg(org) {
+  const tipoLabel = {
+    'independiente': 'Organizador independiente',
+    'representante_club': 'Representante de club',
+    'federacion': 'Federación / asociación'
+  };
+
+  document.getElementById('panel-org-nombre').textContent = org.nombre || '—';
+  document.getElementById('panel-org-tipo').textContent = tipoLabel[org.tipo_organizador] || org.tipo_organizador || '—';
+  document.getElementById('org-info-tel').textContent = org.telefono || '—';
+  document.getElementById('org-info-ubicacion').textContent =
+    `${org.ciudad || ''}, ${org.provincia || ''}`;
+
+  // Torneos del organizador
+  const { data: torneos } = await _sb.from('torneos')
+    .select('*')
+    .eq('organizador_id', org.id)
+    .order('fecha_inicio', { ascending: false });
+
+  const lista = torneos || [];
+  document.getElementById('org-kpi-total').textContent = lista.length;
+  document.getElementById('org-kpi-activos').textContent =
+    lista.filter(t => t.estado === 'abierto' || t.estado === 'en_curso').length;
+
+  const totalInscriptos = lista.reduce((s,t) => s + (t.cupos_ocupados||0), 0);
+  document.getElementById('org-kpi-inscriptos').textContent = totalInscriptos;
+
+  if (lista.length > 0) {
+    document.getElementById('org-torneos-lista').innerHTML = lista.map(t => {
+      const estadoColor = {
+        'abierto': 'rgba(200,245,90,0.1);color:var(--verde)',
+        'en_curso': 'rgba(100,180,255,0.1);color:#64b4ff',
+        'finalizado': 'rgba(255,255,255,0.05);color:var(--texto-suave)',
+        'borrador': 'rgba(255,180,50,0.1);color:#ffb432'
+      }[t.estado] || 'rgba(255,255,255,0.05);color:var(--texto-suave)';
+
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--borde)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:13px;color:var(--blanco);font-weight:500">${t.nombre || '—'}</div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${estadoColor}">${t.estado || '—'}</span>
+        </div>
+        <div style="font-size:11px;color:var(--texto-suave);margin-top:3px">${t.fecha_inicio || ''} · ${t.cupos_ocupados||0}/${t.cupos_max||0} inscriptos</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+
+// ════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ════════════════════════════════════════════
+function openSidebar(perfil) {
+  const sb = document.getElementById('sidebar-' + perfil);
+  const ov = document.getElementById('overlay-' + perfil);
+  if (sb) sb.classList.add('mobile-open');
+  if (ov) ov.classList.add('show');
+}
+function closeSidebar(perfil) {
+  const sb = document.getElementById('sidebar-' + perfil);
+  const ov = document.getElementById('overlay-' + perfil);
+  if (sb) sb.classList.remove('mobile-open');
+  if (ov) ov.classList.remove('show');
+}
+
+// ════════════════════════════════════════════
+// TABS PANEL JUGADOR
+// ════════════════════════════════════════════
+function jugTab(tab) {
+  const secciones = ['inicio','partidos','torneos','ranking'];
+  secciones.forEach(s => {
+    const el = document.getElementById('jug-sec-' + s);
+    if (el) el.style.display = 'none';
+    const btn = document.getElementById('jug-tab-' + s);
+    if (btn) { btn.classList.remove('active'); }
+  });
+  const sec = document.getElementById('jug-sec-' + tab);
+  if (sec) sec.style.display = 'block';
+  const btn = document.getElementById('jug-tab-' + tab);
+  if (btn) btn.classList.add('active');
+  const titles = { inicio: 'Mi panel', partidos: 'Mis partidos', torneos: 'Torneos', ranking: 'Ranking' };
+  const el = document.getElementById('jug-topbar-title');
+  if (el) el.textContent = titles[tab] || 'Mi panel';
+  closeSidebar('jug');
+
+  // Cargar partidos al entrar a la tab
+  if (tab === 'partidos') cargarMisPartidos();
+  if (tab === 'torneos') cargarTorneosJugador();
+}
+
+
+async function init() {
+  inicializarProvincias();
+
+  // Detectar si venimos de un link de reset de contraseña
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=recovery')) {
+    ir('s-nueva-password');
+    _sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        ir('s-nueva-password');
+      }
+    });
+    return;
+  }
+
+  const { data: { session } } = await _sb.auth.getSession();
+
+  if (session?.user) {
+    await redirigirSegunPerfil(session.user);
+    return;
+  }
+
+  // Escuchar cambios de auth (Google callback y recovery)
+  _sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      ir('s-nueva-password');
+    } else if (event === 'SIGNED_IN' && session?.user) {
+      await redirigirSegunPerfil(session.user);
+    }
+  });
+
+  ir('s-inicio');
+}
+
+// ════════════════════════════════════════════
+// MÓDULO REGISTRO DE PARTIDO
+// ════════════════════════════════════════════
+
+let partidoData = { pareja: null, rival1: null, rival2: null };
+let jugadorActualData = null;
+
+function abrirModalPartido() {
+  partidoData = { pareja: null, rival1: null, rival2: null };
+
+  ['buscar-pareja','buscar-rival1','buscar-rival2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['resultados-pareja','resultados-rival1','resultados-rival2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+  ['pareja-seleccionada','rival1-seleccionado','rival2-seleccionado'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  ['set1a','set1b','set2a','set2b','set3a','set3b'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const alertEl = document.getElementById('alert-partido');
+  if (alertEl) { alertEl.style.display = 'none'; alertEl.textContent = ''; }
+
+  document.getElementById('partido-paso1').style.display = 'block';
+  document.getElementById('partido-paso2').style.display = 'none';
+  document.getElementById('partido-paso3').style.display = 'none';
+  document.getElementById('impacto-box').style.display = 'none';
+
+  document.getElementById('modal-partido').style.display = 'flex';
+}
+
+function cerrarModalPartido() {
+  document.getElementById('modal-partido').style.display = 'none';
+}
+
+async function buscarJugador(inputId, resultadosId) {
+  const q = document.getElementById(inputId)?.value?.trim();
+  const contenedor = document.getElementById(resultadosId);
+  if (!contenedor) return;
+
+  if (!q || q.length < 2) { contenedor.innerHTML = ''; return; }
+
+  const { data: jugadores } = await _sb
+    .from('jugadores')
+    .select('id, nombre, rating_mto, categoria_habilitada, ciudad')
+    .ilike('nombre', `%${q}%`)
+    .limit(5);
+
+  if (!jugadores || jugadores.length === 0) {
+    contenedor.innerHTML = '<div style="font-size:12px;color:var(--texto-suave);padding:8px">Sin resultados</div>';
+    return;
+  }
+
+  const tipo = inputId.includes('pareja') ? 'pareja' : inputId.includes('rival1') ? 'rival1' : 'rival2';
+
+  contenedor.innerHTML = jugadores.map(j => {
+    const nombreSafe = (j.nombre||'').replace(/'/g,"\\'");
+    const catSafe = (j.categoria_habilitada||'').replace(/'/g,"\\'");
+    return `<div onclick="seleccionarJugador('${tipo}','${j.id}','${nombreSafe}',${j.rating_mto||0},'${catSafe}')"
+      style="padding:8px 12px;cursor:pointer;border-radius:8px;margin-bottom:4px;background:var(--gris-medio);
+             display:flex;justify-content:space-between;align-items:center;transition:background .15s"
+      onmouseover="this.style.background='rgba(200,245,90,0.08)'"
+      onmouseout="this.style.background='var(--gris-medio)'">
+      <div>
+        <div style="font-size:13px;color:var(--blanco)">${j.nombre}</div>
+        <div style="font-size:11px;color:var(--texto-suave)">${j.categoria_habilitada||''} · ${j.ciudad||''}</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--verde)">${(j.rating_mto||0).toFixed(1)}</div>
+    </div>`;
+  }).join('');
+}
+
+function seleccionarJugador(tipo, id, nombre, rating, categoria) {
+  partidoData[tipo] = { id, nombre, rating: parseFloat(rating), categoria };
+
+  const inputMap = { pareja:'buscar-pareja', rival1:'buscar-rival1', rival2:'buscar-rival2' };
+  const resultMap = { pareja:'resultados-pareja', rival1:'resultados-rival1', rival2:'resultados-rival2' };
+  const selMap   = { pareja:'pareja-seleccionada', rival1:'rival1-seleccionado', rival2:'rival2-seleccionado' };
+  const nomMap   = { pareja:'pareja-nombre', rival1:'rival1-nombre', rival2:'rival2-nombre' };
+
+  document.getElementById(inputMap[tipo]).value = '';
+  document.getElementById(resultMap[tipo]).innerHTML = '';
+  document.getElementById(nomMap[tipo]).textContent = `${nombre} · MTO ${parseFloat(rating).toFixed(1)}`;
+  document.getElementById(selMap[tipo]).style.display = 'flex';
+}
+
+function limpiarSeleccion(tipo) {
+  partidoData[tipo] = null;
+  const selMap = { pareja:'pareja-seleccionada', rival1:'rival1-seleccionado', rival2:'rival2-seleccionado' };
+  document.getElementById(selMap[tipo]).style.display = 'none';
+}
+
+function mostrarAlertaPartido(msg) {
+  const el = document.getElementById('alert-partido');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function ocultarAlertaPartido() {
+  const el = document.getElementById('alert-partido');
+  if (el) el.style.display = 'none';
+}
+
+async function partidoPaso2() {
+  ocultarAlertaPartido();
+  if (!partidoData.pareja)  return mostrarAlertaPartido('Seleccioná a tu pareja.');
+  if (!partidoData.rival1)  return mostrarAlertaPartido('Seleccioná al Rival 1.');
+  if (!partidoData.rival2)  return mostrarAlertaPartido('Seleccioná al Rival 2.');
+
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) return mostrarAlertaPartido('Error de sesión.');
+
+  // Verificar que no se repita ningún jugador
+  const ids = [user.id, partidoData.pareja.id, partidoData.rival1.id, partidoData.rival2.id];
+  if (new Set(ids).size !== 4) return mostrarAlertaPartido('Un jugador no puede aparecer dos veces en el mismo partido.');
+
+  const { data: jugActual } = await _sb.from('jugadores').select('*').eq('id', user.id).single();
+  jugadorActualData = jugActual;
+
+  // Resumen visual
+  document.getElementById('partido-resumen-jugadores').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10px;color:var(--verde);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Tu equipo</div>
+        <div style="font-size:13px;color:var(--blanco);margin-bottom:2px">${jugActual?.nombre||'Vos'} <span style="color:var(--texto-suave);font-size:11px">· ${(jugActual?.rating_mto||0).toFixed(1)}</span></div>
+        <div style="font-size:13px;color:var(--blanco)">${partidoData.pareja.nombre} <span style="color:var(--texto-suave);font-size:11px">· ${partidoData.pareja.rating.toFixed(1)}</span></div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--texto-suave)">VS</div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:#ff8080;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Rivales</div>
+        <div style="font-size:13px;color:var(--blanco);margin-bottom:2px">${partidoData.rival1.nombre} <span style="color:var(--texto-suave);font-size:11px">· ${partidoData.rival1.rating.toFixed(1)}</span></div>
+        <div style="font-size:13px;color:var(--blanco)">${partidoData.rival2.nombre} <span style="color:var(--texto-suave);font-size:11px">· ${partidoData.rival2.rating.toFixed(1)}</span></div>
+      </div>
+    </div>`;
+
+  document.getElementById('partido-paso1').style.display = 'none';
+  document.getElementById('partido-paso2').style.display = 'block';
+}
+
+function volverPaso1() {
+  document.getElementById('partido-paso2').style.display = 'none';
+  document.getElementById('partido-paso1').style.display = 'block';
+  ocultarAlertaPartido();
+}
+
+function calcularImpacto() {
+  const s1a = parseInt(document.getElementById('set1a').value);
+  const s1b = parseInt(document.getElementById('set1b').value);
+  const s2a = parseInt(document.getElementById('set2a').value);
+  const s2b = parseInt(document.getElementById('set2b').value);
+  const s3a = parseInt(document.getElementById('set3a').value) || 0;
+  const s3b = parseInt(document.getElementById('set3b').value) || 0;
+
+  if (isNaN(s1a) || isNaN(s1b) || isNaN(s2a) || isNaN(s2b)) return;
+
+  const totalMi  = s1a + s2a + s3a;
+  const totalRiv = s1b + s2b + s3b;
+  const total    = totalMi + totalRiv;
+  if (total === 0) return;
+
+  const ratingMi  = ((jugadorActualData?.rating_mto||0) + (partidoData.pareja?.rating||0)) / 2;
+  const ratingRiv = ((partidoData.rival1?.rating||0) + (partidoData.rival2?.rating||0)) / 2;
+
+  const pctReal     = totalMi / total;
+  const diff        = ratingMi - ratingRiv;
+  const pctEsperado = Math.max(0.1, Math.min(0.9, 0.5 + diff * 0.06));
+  const delta       = Math.max(-1.5, Math.min(1.5, (pctReal - pctEsperado) * 2));
+
+  const ratingActual = jugadorActualData?.rating_mto || 0;
+  const ratingNuevo  = Math.max(0, Math.min(10, ratingActual + delta));
+  const deltaStr     = delta >= 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1);
+  const color        = delta >= 0 ? 'var(--verde)' : '#ff8080';
+
+  document.getElementById('impacto-box').style.display = 'block';
+  document.getElementById('impacto-actual').textContent = ratingActual.toFixed(1);
+  document.getElementById('impacto-nuevo').textContent  = ratingNuevo.toFixed(1);
+  document.getElementById('impacto-nuevo').style.color  = color;
+  document.getElementById('impacto-delta').textContent  = deltaStr;
+  document.getElementById('impacto-delta').style.color  = color;
+}
+
+async function confirmarPartido() {
+  ocultarAlertaPartido();
+
+  const s1a = parseInt(document.getElementById('set1a').value);
+  const s1b = parseInt(document.getElementById('set1b').value);
+  const s2a = parseInt(document.getElementById('set2a').value);
+  const s2b = parseInt(document.getElementById('set2b').value);
+  const s3aRaw = document.getElementById('set3a').value;
+  const s3bRaw = document.getElementById('set3b').value;
+  const s3a = s3aRaw !== '' ? parseInt(s3aRaw) : null;
+  const s3b = s3bRaw !== '' ? parseInt(s3bRaw) : null;
+
+  if (isNaN(s1a) || isNaN(s1b)) return mostrarAlertaPartido('Ingresá el resultado del Set 1.');
+  if (isNaN(s2a) || isNaN(s2b)) return mostrarAlertaPartido('Ingresá el resultado del Set 2.');
+
+  // Determinar ganador por sets
+  let setsM = 0, setsR = 0;
+  if (s1a > s1b) setsM++; else setsR++;
+  if (s2a > s2b) setsM++; else setsR++;
+  if (s3a !== null && s3b !== null) { if (s3a > s3b) setsM++; else setsR++; }
+  const ganador = setsM > setsR ? 'AB' : 'CD';
+
+  const btn = document.getElementById('btn-confirmar-partido');
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) {
+    btn.disabled = false;
+    btn.textContent = 'Registrar y notificar →';
+    return mostrarAlertaPartido('Error de sesión. Volvé a ingresar.');
+  }
+
+  const { data: partido, error } = await _sb.from('partidos').insert({
+    jugador1_id: user.id,
+    jugador2_id: partidoData.pareja.id,
+    jugador3_id: partidoData.rival1.id,
+    jugador4_id: partidoData.rival2.id,
+    set1_a: s1a,
+    set1_b: s1b,
+    set2_a: s2a,
+    set2_b: s2b,
+    set3_a: s3a,
+    set3_b: s3b,
+    ganador,
+    confirmado: false,
+    confirmado_por_j1: true,
+    confirmado_por_j2: false,
+    confirmado_por_j3: false,
+    confirmado_por_j4: false,
+    registrado_por: user.id
+  }).select().single();
+
+  if (error) {
+    btn.disabled = false;
+    btn.textContent = 'Registrar y notificar →';
+    console.error('Error insertar partido:', error);
+    return mostrarAlertaPartido('Error al registrar: ' + error.message);
+  }
+
+  // Notificaciones para los otros 3
+  try {
+    await _sb.from('notificaciones').insert([
+      { usuario_id: partidoData.pareja.id,  tipo: 'confirmacion_partido', mensaje: `${jugadorActualData?.nombre||'Un jugador'} registró un partido. Confirmá para actualizar tu Rating MTO.`, partido_id: partido?.id||null, leida: false },
+      { usuario_id: partidoData.rival1.id,  tipo: 'confirmacion_partido', mensaje: `${jugadorActualData?.nombre||'Un jugador'} registró un partido. Confirmá para actualizar tu Rating MTO.`, partido_id: partido?.id||null, leida: false },
+      { usuario_id: partidoData.rival2.id,  tipo: 'confirmacion_partido', mensaje: `${jugadorActualData?.nombre||'Un jugador'} registró un partido. Confirmá para actualizar tu Rating MTO.`, partido_id: partido?.id||null, leida: false }
+    ]);
+  } catch(e) { console.warn('No se pudieron crear notificaciones:', e); }
+
+  btn.disabled = false;
+  btn.textContent = 'Registrar y notificar →';
+
+  document.getElementById('partido-paso2').style.display = 'none';
+  document.getElementById('partido-paso3').style.display = 'block';
+
+  // Recargar panel
+  const { data: jugActualizado } = await _sb.from('jugadores').select('*').eq('id', user.id).single();
+  if (jugActualizado) cargarPanelJugador(jugActualizado);
+}
+
+// ════════════════════════════════════════════
+// MÓDULO CONFIRMACIÓN DE PARTIDOS
+// ════════════════════════════════════════════
+
+async function cargarMisPartidos() {
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) return;
+
+  // Traer todos los partidos donde participa este jugador
+  const { data: partidos } = await _sb.from('partidos')
+    .select('*')
+    .or(`jugador1_id.eq.${user.id},jugador2_id.eq.${user.id},jugador3_id.eq.${user.id},jugador4_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
+
+  if (!partidos || partidos.length === 0) {
+    document.getElementById('jug-partidos-pendientes').innerHTML =
+      '<div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">No tenés partidos pendientes.</div>';
+    document.getElementById('jug-partidos-full').innerHTML =
+      '<div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">Sin partidos confirmados todavía.</div>';
+    return;
+  }
+
+  // Obtener nombres de todos los jugadores involucrados
+  const ids = [...new Set(partidos.flatMap(p => [p.jugador1_id, p.jugador2_id, p.jugador3_id, p.jugador4_id].filter(Boolean)))];
+  const { data: jugadores } = await _sb.from('jugadores').select('id, nombre, rating_mto').in('id', ids);
+  const jugMap = {};
+  (jugadores || []).forEach(j => { jugMap[j.id] = j; });
+
+  const getNombre = id => jugMap[id]?.nombre || '—';
+  const getRating = id => (jugMap[id]?.rating_mto || 0).toFixed(1);
+
+  // Separar pendientes (donde el usuario no confirmó todavía) e historial
+  const pendientes = [];
+  const historial  = [];
+
+  partidos.forEach(p => {
+    const esJ1 = p.jugador1_id === user.id;
+    const esJ2 = p.jugador2_id === user.id;
+    const esJ3 = p.jugador3_id === user.id;
+    const esJ4 = p.jugador4_id === user.id;
+
+    const yaConfirme = (esJ1 && p.confirmado_por_j1) ||
+                       (esJ2 && p.confirmado_por_j2) ||
+                       (esJ3 && p.confirmado_por_j3) ||
+                       (esJ4 && p.confirmado_por_j4);
+
+    if (p.estado === 'rechazado') {
+      historial.push({ ...p, yaConfirme });
+    } else if (p.confirmado) {
+      historial.push({ ...p, yaConfirme });
+    } else if (!yaConfirme) {
+      pendientes.push({ ...p, yaConfirme, esJ1, esJ2, esJ3, esJ4 });
+    } else {
+      historial.push({ ...p, yaConfirme, esperandoOtros: true });
+    }
+  });
+
+  // Renderizar pendientes
+  const elPend = document.getElementById('jug-partidos-pendientes');
+  if (pendientes.length === 0) {
+    elPend.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">No tenés partidos pendientes de confirmación. ✓</div>';
+  } else {
+    elPend.innerHTML = pendientes.map(p => {
+      const fecha = new Date(p.created_at).toLocaleDateString('es-AR', { day:'numeric', month:'short' });
+      const registradoPor = getNombre(p.registrado_por);
+      const miEquipoEsAB = p.jugador1_id === user.id || p.jugador2_id === user.id;
+      const equipoA = `${getNombre(p.jugador1_id)} · ${getRating(p.jugador1_id)} / ${getNombre(p.jugador2_id)} · ${getRating(p.jugador2_id)}`;
+      const equipoB = `${getNombre(p.jugador3_id)} · ${getRating(p.jugador3_id)} / ${getNombre(p.jugador4_id)} · ${getRating(p.jugador4_id)}`;
+      const s3 = p.set3_a !== null ? ` / ${p.set3_a}–${p.set3_b}` : '';
+      const resultado = `${p.set1_a}–${p.set1_b} / ${p.set2_a}–${p.set2_b}${s3}`;
+      const ganadorTexto = p.ganador === 'AB'
+        ? (miEquipoEsAB ? '🟢 Tu equipo ganó' : '🔴 Tu equipo perdió')
+        : (miEquipoEsAB ? '🔴 Tu equipo perdió' : '🟢 Tu equipo ganó');
+
+      return `<div style="background:rgba(255,180,50,0.05);border:1px solid rgba(255,180,50,0.2);border-radius:12px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div>
+            <div style="font-size:10px;color:#ffb432;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">⏳ Pendiente tu confirmación</div>
+            <div style="font-size:12px;color:var(--texto-suave)">Registrado por ${registradoPor} · ${fecha}</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--blanco)">${resultado}</div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:12px">
+          <div>
+            <div style="color:var(--verde);font-size:10px;text-transform:uppercase;margin-bottom:3px">Equipo A</div>
+            <div style="color:var(--blanco)">${equipoA}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="color:#ff8080;font-size:10px;text-transform:uppercase;margin-bottom:3px">Equipo B</div>
+            <div style="color:var(--blanco)">${equipoB}</div>
+          </div>
+        </div>
+
+        <div style="font-size:12px;margin-bottom:14px;color:${p.ganador === 'AB' ? (miEquipoEsAB ? 'var(--verde)' : '#ff8080') : (miEquipoEsAB ? '#ff8080' : 'var(--verde)')}">${ganadorTexto}</div>
+
+        <div style="display:flex;gap:8px">
+          <button onclick="responderPartido('${p.id}', true)" 
+            style="flex:1;padding:10px;background:rgba(200,245,90,0.1);border:1px solid rgba(200,245,90,0.3);border-radius:8px;color:var(--verde);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s"
+            onmouseover="this.style.background='rgba(200,245,90,0.2)'" onmouseout="this.style.background='rgba(200,245,90,0.1)'">
+            ✓ Confirmar resultado
+          </button>
+          <button onclick="responderPartido('${p.id}', false)"
+            style="flex:1;padding:10px;background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.25);border-radius:8px;color:#ff8080;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s"
+            onmouseover="this.style.background='rgba(255,77,77,0.15)'" onmouseout="this.style.background='rgba(255,77,77,0.08)'">
+            ✕ Rechazar
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Renderizar historial
+  const elHist = document.getElementById('jug-partidos-full');
+  const histFiltrado = historial.filter(p => p.confirmado || p.estado === 'rechazado' || p.esperandoOtros);
+  if (histFiltrado.length === 0) {
+    elHist.innerHTML = '<div style="text-align:center;padding:24px;color:var(--texto-suave);font-size:13px">Sin partidos en el historial todavía.</div>';
+  } else {
+    elHist.innerHTML = histFiltrado.map(p => {
+      const fecha = new Date(p.created_at).toLocaleDateString('es-AR', { day:'numeric', month:'short' });
+      const miEquipoEsAB = p.jugador1_id === user.id || p.jugador2_id === user.id;
+      const s3 = p.set3_a !== null ? ` / ${p.set3_a}–${p.set3_b}` : '';
+      const resultado = `${p.set1_a}–${p.set1_b} / ${p.set2_a}–${p.set2_b}${s3}`;
+
+      let estadoBadge = '';
+      if (p.estado === 'rechazado') {
+        estadoBadge = '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,77,77,0.1);color:#ff8080">✕ Rechazado — pendiente admin</span>';
+      } else if (p.esperandoOtros) {
+        // Mostrar quiénes falta que confirmen
+        const faltantes = [];
+        if (!p.confirmado_por_j1) faltantes.push(getNombre(p.jugador1_id));
+        if (!p.confirmado_por_j2) faltantes.push(getNombre(p.jugador2_id));
+        if (!p.confirmado_por_j3) faltantes.push(getNombre(p.jugador3_id));
+        if (!p.confirmado_por_j4) faltantes.push(getNombre(p.jugador4_id));
+        estadoBadge = `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(255,180,50,0.1);color:#ffb432">⏳ Esperando: ${faltantes.join(', ')}</span>`;
+      } else if (p.confirmado) {
+        const gano = (miEquipoEsAB && p.ganador === 'AB') || (!miEquipoEsAB && p.ganador === 'CD');
+        estadoBadge = `<span style="font-size:10px;padding:2px 8px;border-radius:10px;${gano ? 'background:rgba(200,245,90,0.1);color:var(--verde)' : 'background:rgba(255,77,77,0.1);color:#ff8080'}">${gano ? '✓ Victoria' : '✕ Derrota'}</span>`;
+      }
+
+      return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;color:var(--blanco);font-weight:500">${resultado}</div>
+            <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">${fecha} · ${getNombre(p.jugador1_id)} / ${getNombre(p.jugador2_id)} vs ${getNombre(p.jugador3_id)} / ${getNombre(p.jugador4_id)}</div>
+          </div>
+          <div>${estadoBadge}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function responderPartido(partidoId, confirmar) {
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) return;
+
+  // Obtener el partido para saber qué columna actualizar
+  const { data: partido } = await _sb.from('partidos').select('*').eq('id', partidoId).single();
+  if (!partido) return;
+
+  const esJ1 = partido.jugador1_id === user.id;
+  const esJ2 = partido.jugador2_id === user.id;
+  const esJ3 = partido.jugador3_id === user.id;
+  const esJ4 = partido.jugador4_id === user.id;
+
+  if (!confirmar) {
+    // Rechazar — marcar estado como rechazado
+    await _sb.from('partidos').update({ estado: 'rechazado' }).eq('id', partidoId);
+
+    // Notificar al admin y al que registró
+    try {
+      await _sb.from('notificaciones').insert({
+        usuario_id: partido.registrado_por,
+        tipo: 'partido_rechazado',
+        mensaje: `Un jugador rechazó el partido. El admin debe resolver la disputa.`,
+        partido_id: partidoId,
+        leida: false
+      });
+    } catch(e) { console.warn('Error notificación rechazo:', e); }
+
+    await cargarMisPartidos();
+    return;
+  }
+
+  // Confirmar — actualizar la columna correspondiente
+  const update = {};
+  if (esJ1) update.confirmado_por_j1 = true;
+  if (esJ2) update.confirmado_por_j2 = true;
+  if (esJ3) update.confirmado_por_j3 = true;
+  if (esJ4) update.confirmado_por_j4 = true;
+
+  await _sb.from('partidos').update(update).eq('id', partidoId);
+
+  // Verificar si los 4 confirmaron ahora
+  const { data: partidoActualizado } = await _sb.from('partidos').select('*').eq('id', partidoId).single();
+
+  if (partidoActualizado.confirmado_por_j1 &&
+      partidoActualizado.confirmado_por_j2 &&
+      partidoActualizado.confirmado_por_j3 &&
+      partidoActualizado.confirmado_por_j4) {
+
+    // Marcar como confirmado completo
+    await _sb.from('partidos').update({ confirmado: true, estado: 'confirmado' }).eq('id', partidoId);
+
+    // ── CALCULAR RATING MTO REAL ──
+    await calcularYActualizarRating(partidoActualizado);
+  }
+
+  await cargarMisPartidos();
+}
+
+// ════════════════════════════════════════════
+// CÁLCULO AUTOMÁTICO DEL RATING MTO
+// ════════════════════════════════════════════
+async function calcularYActualizarRating(partido) {
+  // Obtener datos actuales de los 4 jugadores
+  const ids = [partido.jugador1_id, partido.jugador2_id, partido.jugador3_id, partido.jugador4_id];
+  const { data: jugadores } = await _sb.from('jugadores').select('*').in('id', ids);
+  if (!jugadores || jugadores.length < 4) return;
+
+  const j1 = jugadores.find(j => j.id === partido.jugador1_id);
+  const j2 = jugadores.find(j => j.id === partido.jugador2_id);
+  const j3 = jugadores.find(j => j.id === partido.jugador3_id);
+  const j4 = jugadores.find(j => j.id === partido.jugador4_id);
+  if (!j1 || !j2 || !j3 || !j4) return;
+
+  // Games totales
+  const s1a = partido.set1_a || 0, s1b = partido.set1_b || 0;
+  const s2a = partido.set2_a || 0, s2b = partido.set2_b || 0;
+  const s3a = partido.set3_a || 0, s3b = partido.set3_b || 0;
+
+  const gamesAB = s1a + s2a + s3a;
+  const gamesCD = s1b + s2b + s3b;
+  const totalGames = gamesAB + gamesCD;
+  if (totalGames === 0) return;
+
+  // % games ganados equipo AB
+  const pctAB = gamesAB / totalGames;
+
+  // Rating promedio por equipo
+  const ratingAB = ((j1.rating_mto || 0) + (j2.rating_mto || 0)) / 2;
+  const ratingCD = ((j3.rating_mto || 0) + (j4.rating_mto || 0)) / 2;
+
+  // Expectativa según diferencia de rating (modelo UTR)
+  const diff = ratingAB - ratingCD;
+  const pctEsperadoAB = Math.max(0.1, Math.min(0.9, 0.5 + diff * 0.06));
+
+  // Delta total del partido — cap entre -1.5 y +1.5
+  const deltaAB = Math.max(-1.5, Math.min(1.5, (pctAB - pctEsperadoAB) * 2));
+  const deltaCD = -deltaAB; // simétrico
+
+  // Distribución por rol: derecha 55%, revés 45%
+  const deltaJ1 = parseFloat((deltaAB * 0.55).toFixed(1)); // AB derecha
+  const deltaJ2 = parseFloat((deltaAB * 0.45).toFixed(1)); // AB revés
+  const deltaJ3 = parseFloat((deltaCD * 0.55).toFixed(1)); // CD derecha
+  const deltaJ4 = parseFloat((deltaCD * 0.45).toFixed(1)); // CD revés
+
+  // Nuevos ratings (piso 0.1, techo 10.0)
+  const nuevoJ1 = Math.max(0.1, Math.min(10.0, parseFloat(((j1.rating_mto || 0) + deltaJ1).toFixed(1))));
+  const nuevoJ2 = Math.max(0.1, Math.min(10.0, parseFloat(((j2.rating_mto || 0) + deltaJ2).toFixed(1))));
+  const nuevoJ3 = Math.max(0.1, Math.min(10.0, parseFloat(((j3.rating_mto || 0) + deltaJ3).toFixed(1))));
+  const nuevoJ4 = Math.max(0.1, Math.min(10.0, parseFloat(((j4.rating_mto || 0) + deltaJ4).toFixed(1))));
+
+  const ganoAB = partido.ganador === 'AB';
+
+  // Actualizar los 4 jugadores
+  const actualizaciones = [
+    { jugador: j1, nuevoRating: nuevoJ1, gano: ganoAB,  delta: deltaJ1 },
+    { jugador: j2, nuevoRating: nuevoJ2, gano: ganoAB,  delta: deltaJ2 },
+    { jugador: j3, nuevoRating: nuevoJ3, gano: !ganoAB, delta: deltaJ3 },
+    { jugador: j4, nuevoRating: nuevoJ4, gano: !ganoAB, delta: deltaJ4 },
+  ];
+
+  for (const { jugador, nuevoRating, gano, delta } of actualizaciones) {
+    const nuevosPartidos = (jugador.partidos_jugados || 0) + 1;
+    const nuevasVictorias = (jugador.partidos_ganados || 0) + (gano ? 1 : 0);
+
+    // Actualizar jugador
+    await _sb.from('jugadores').update({
+      rating_mto: nuevoRating,
+      rating: nuevoRating,
+      rating_provisional: false,
+      partidos_jugados: nuevosPartidos,
+      partidos_ganados: nuevasVictorias,
+    }).eq('id', jugador.id);
+
+    // Insertar en historial_rating
+    try {
+      await _sb.from('historial_rating').insert({
+        jugador_id: jugador.id,
+        partido_id: partido.id,
+        rating_antes: jugador.rating_mto || 0,
+        rating_despues: nuevoRating,
+        delta: delta
+      });
+    } catch(e) { console.warn('Error historial_rating:', e); }
+
+    // Verificar promoción automática de categoría
+    await verificarPromocion(jugador.id, nuevoRating, jugador.categoria_habilitada);
+  }
+
+  // Marcar partido como procesado
+  await _sb.from('partidos').update({ estado: 'procesado' }).eq('id', partido.id);
+
+  console.log('✅ Rating MTO actualizado para los 4 jugadores');
+}
+
+// ════════════════════════════════════════════
+// PROMOCIÓN AUTOMÁTICA DE CATEGORÍA
+// ════════════════════════════════════════════
+async function verificarPromocion(jugadorId, nuevoRating, categoriaActual) {
+  const UMBRAL = {
+    'sin_categoria': 2.0, '8va': 3.0, '7ma': 4.0, '6ta': 5.0,
+    '5ta': 6.0, '4ta': 7.0, '3ra': 8.0, '2da': 9.0
+  };
+  const SIGUIENTE = {
+    'sin_categoria': '8va', '8va': '7ma', '7ma': '6ta', '6ta': '5ta',
+    '5ta': '4ta', '4ta': '3ra', '3ra': '2da', '2da': '1ra'
+  };
+
+  const umbral = UMBRAL[categoriaActual];
+  if (!umbral) return; // ya está en 1ra, no hay siguiente
+
+  if (nuevoRating >= umbral) {
+    const nuevaCat = SIGUIENTE[categoriaActual];
+    await _sb.from('jugadores').update({ categoria_habilitada: nuevaCat }).eq('id', jugadorId);
+
+    // Notificar al jugador
+    try {
+      await _sb.from('notificaciones').insert({
+        usuario_id: jugadorId,
+        tipo: 'promocion_categoria',
+        mensaje: `¡Felicitaciones! Tu Rating MTO alcanzó ${nuevoRating}. Ahora podés jugar en ${nuevaCat} categoría.`,
+        leida: false
+      });
+    } catch(e) { console.warn('Error notificación promoción:', e); }
+
+    console.log(`🎉 Jugador promovido a ${nuevaCat}`);
+  }
+}
+
+
+// ════════════════════════════════════════════
+// NUEVA CONTRASEÑA (desde link de reset)
+// ════════════════════════════════════════════
+async function doNuevaPassword() {
+  const alertErr = document.getElementById('alert-nueva-pass');
+  const alertOk  = document.getElementById('alert-nueva-pass-ok');
+  alertErr.classList.remove('show');
+  alertOk.classList.remove('show');
+
+  const pass  = document.getElementById('nueva-pass').value;
+  const pass2 = document.getElementById('nueva-pass2').value;
+
+  if (pass.length < 8) {
+    alertErr.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+    alertErr.classList.add('show');
+    return;
+  }
+  if (pass !== pass2) {
+    alertErr.textContent = 'Las contraseñas no coinciden.';
+    alertErr.classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('btn-nueva-pass');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  const { error } = await _sb.auth.updateUser({ password: pass });
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar nueva contraseña';
+
+  if (error) {
+    alertErr.textContent = 'Error: ' + error.message;
+    alertErr.classList.add('show');
+    return;
+  }
+
+  alertOk.textContent = '✓ ¡Contraseña actualizada! Redirigiendo a tu panel...';
+  alertOk.classList.add('show');
+
+  setTimeout(async () => {
+    const { data: { user } } = await _sb.auth.getUser();
+    if (user) await redirigirSegunPerfil(user);
+  }, 2000);
+}
+
+
+// ════════════════════════════════════════════
+// MÓDULO DE TORNEOS
+// ════════════════════════════════════════════
+
+let torneoActualId = null;
+let compañeroSeleccionado = null;
+let torneoInscripcionData = null;
+
+// ── CREAR TORNEO ──
+function abrirModalCrearTorneo(origen) {
+  document.getElementById('torneo-nombre').value = '';
+  document.getElementById('torneo-tipo').value = '';
+  document.getElementById('torneo-categoria').value = '';
+  document.getElementById('torneo-formato').value = '';
+  document.getElementById('torneo-fecha').value = '';
+  document.getElementById('torneo-cupos').value = '';
+  document.getElementById('torneo-ubicacion').value = '';
+  document.getElementById('torneo-descripcion').value = '';
+  document.getElementById('torneo-suma-max').value = '';
+  document.getElementById('campo-suma-x').style.display = 'none';
+  const alertEl = document.getElementById('alert-crear-torneo');
+  alertEl.classList.remove('show');
+  document.getElementById('modal-crear-torneo').dataset.origen = origen;
+  document.getElementById('modal-crear-torneo').style.display = 'flex';
+}
+
+function cerrarModalCrearTorneo() {
+  document.getElementById('modal-crear-torneo').style.display = 'none';
+}
+
+function actualizarUiTorneo() {
+  const tipo = document.getElementById('torneo-tipo').value;
+  document.getElementById('campo-suma-x').style.display = tipo === 'suma_x' ? 'block' : 'none';
+}
+
+async function doCrearTorneo() {
+  const alertEl = document.getElementById('alert-crear-torneo');
+  alertEl.classList.remove('show');
+
+  const nombre     = document.getElementById('torneo-nombre').value.trim();
+  const tipo       = document.getElementById('torneo-tipo').value;
+  const categoria  = document.getElementById('torneo-categoria').value;
+  const formato    = document.getElementById('torneo-formato').value;
+  const fecha      = document.getElementById('torneo-fecha').value;
+  const cupos      = parseInt(document.getElementById('torneo-cupos').value);
+  const ubicacion  = document.getElementById('torneo-ubicacion').value.trim();
+  const descripcion = document.getElementById('torneo-descripcion').value.trim();
+  const sumaMax    = tipo === 'suma_x' ? parseFloat(document.getElementById('torneo-suma-max').value) : null;
+
+  if (!nombre)    { alertEl.textContent = 'Ingresá el nombre del torneo.'; alertEl.classList.add('show'); return; }
+  if (!tipo)      { alertEl.textContent = 'Seleccioná el tipo de torneo.'; alertEl.classList.add('show'); return; }
+  if (!categoria) { alertEl.textContent = 'Seleccioná la categoría.'; alertEl.classList.add('show'); return; }
+  if (!formato)   { alertEl.textContent = 'Seleccioná el formato.'; alertEl.classList.add('show'); return; }
+  if (!fecha)     { alertEl.textContent = 'Ingresá la fecha del torneo.'; alertEl.classList.add('show'); return; }
+  if (!cupos || cupos < 4) { alertEl.textContent = 'El mínimo de parejas es 4.'; alertEl.classList.add('show'); return; }
+  if (!ubicacion) { alertEl.textContent = 'Ingresá la ubicación.'; alertEl.classList.add('show'); return; }
+  if (tipo === 'suma_x' && (!sumaMax || sumaMax < 2)) { alertEl.textContent = 'Ingresá la suma máxima de ratings.'; alertEl.classList.add('show'); return; }
+
+  const btn = document.getElementById('btn-crear-torneo');
+  btn.disabled = true; btn.textContent = 'Creando...';
+
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) { btn.disabled = false; btn.textContent = 'Crear torneo'; return; }
+
+  const origen = document.getElementById('modal-crear-torneo').dataset.origen;
+
+  const insertar = {
+    nombre,
+    tipo,
+    categoria,
+    formato,
+    fecha_inicio: fecha,
+    cupos_max: cupos,
+    cupos_ocupados: 0,
+    ubicacion,
+    descripcion,
+    estado: 'abierto',
+    creado_por: user.id,
+    tipo_creador: origen
+  };
+  if (tipo === 'suma_x') insertar.suma_max = sumaMax;
+  if (origen === 'club') insertar.club_id = user.id;
+  if (origen === 'organizador') insertar.organizador_id = user.id;
+
+  const { error } = await _sb.from('torneos').insert(insertar);
+
+  btn.disabled = false; btn.textContent = 'Crear torneo';
+
+  if (error) {
+    alertEl.textContent = 'Error al crear: ' + error.message;
+    alertEl.classList.add('show');
+    return;
+  }
+
+  cerrarModalCrearTorneo();
+  alert('¡Torneo creado! Ya aparece en la lista de torneos disponibles.');
+
+  // Recargar según quién lo creó
+  if (origen === 'club') {
+    const { data: club } = await _sb.from('clubes').select('*').eq('id', user.id).single();
+    if (club) cargarPanelClub(club);
+  } else if (origen === 'organizador') {
+    const { data: org } = await _sb.from('organizadores').select('*').eq('id', user.id).single();
+    if (org) cargarPanelOrg(org);
+  }
+}
+
+// ── VER TORNEOS (panel jugador) ──
+async function cargarTorneosJugador() {
+  const el = document.getElementById('jug-torneos-lista');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">Cargando...</div>';
+
+  const { data: { user } } = await _sb.auth.getUser();
+  if (!user) return;
+
+  const { data: jugador } = await _sb.from('jugadores').select('*').eq('id', user.id).single();
+  if (!jugador) return;
+
+  const { data: torneos } = await _sb.from('torneos')
+    .select('*')
+    .eq('estado', 'abierto')
+    .order('fecha_inicio', { ascending: true });
+
+  if (!torneos || torneos.length === 0) {
+    if (el) el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto-suave);font-size:13px">No hay torneos disponibles por el momento.</div>';
+    return;
+  }
+
+  // Ver en cuáles ya está inscripto
+  const { data: misInscripciones } = await _sb.from('inscripciones')
+    .select('torneo_id')
+    .or(`jugador1_id.eq.${user.id},jugador2_id.eq.${user.id}`);
+  const inscriptosEn = new Set((misInscripciones || []).map(i => i.torneo_id));
+
+  const tipoLabel = { masculino:'Masculino', femenino:'Femenino', mixto:'Mixto', suma_x:'Suma X' };
+  const formatoLabel = { zonas:'Zonas', eliminacion:'Eliminación directa' };
+
+  if (el) el.innerHTML = torneos.map(t => {
+    const yaInscripto = inscriptosEn.has(t.id);
+    const lleno = t.cupos_ocupados >= t.cupos_max;
+    const fecha = t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'long' }) : '—';
+
+    return `<div style="background:var(--gris);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid ${yaInscripto ? 'rgba(200,245,90,0.3)' : 'var(--borde)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--blanco);margin-bottom:4px">${t.nombre}</div>
+          <div style="font-size:12px;color:var(--texto-suave)">${tipoLabel[t.tipo]||t.tipo} · ${t.categoria} · ${formatoLabel[t.formato]||t.formato}</div>
+          <div style="font-size:12px;color:var(--texto-suave);margin-top:2px">📅 ${fecha} · 📍 ${t.ubicacion||'—'}</div>
+          ${t.tipo === 'suma_x' ? `<div style="font-size:11px;color:#ffb432;margin-top:3px">⚡ Suma máxima de ratings: ${t.suma_max}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px">
+          <div style="font-size:13px;font-weight:600;color:${lleno ? '#ff8080' : 'var(--verde)'}">${t.cupos_ocupados}/${t.cupos_max}</div>
+          <div style="font-size:10px;color:var(--texto-suave)">parejas</div>
+        </div>
+      </div>
+      ${yaInscripto
+        ? '<div style="font-size:12px;color:var(--verde);padding:8px 12px;background:rgba(200,245,90,0.08);border-radius:8px;text-align:center">✓ Ya estás inscripto en este torneo</div>'
+        : lleno
+          ? '<div style="font-size:12px;color:#ff8080;padding:8px 12px;background:rgba(255,77,77,0.08);border-radius:8px;text-align:center">Torneo completo</div>'
+          : `<button data-torneo-id="${t.id}" class="btn-inscribirse-torneo" style="width:100%;padding:10px;background:rgba(200,245,90,0.1);border:1px solid rgba(200,245,90,0.3);border-radius:8px;color:var(--verde);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Inscribirse →</button>`
+      }
+    </div>`;
+  }).join('');
+
+  // Event delegation para botones de inscripción
+  const listaEl = document.getElementById('jug-torneos-lista');
+  if (listaEl) {
+    listaEl.onclick = function(e) {
+      const btn = e.target.closest('.btn-inscribirse-torneo');
+      if (btn) abrirModalInscripcion(btn.dataset.torneoId);
+    };
+  }
+
+  // Mis inscripciones
+  await cargarMisInscripciones(user.id);
+}
+
+async function cargarMisInscripciones(userId) {
+  const el = document.getElementById('jug-mis-inscripciones');
+  if (!el) return;
+
+  const { data: inscripciones } = await _sb.from('inscripciones')
+    .select('*, torneos(*)')
+    .or(`jugador1_id.eq.${userId},jugador2_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
+
+  if (!inscripciones || inscripciones.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">Sin inscripciones todavía.</div>';
+    return;
+  }
+
+  // Obtener nombres de compañeros
+  const companeroIds = inscripciones.map(i => i.jugador1_id === userId ? i.jugador2_id : i.jugador1_id);
+  const { data: companeros } = await _sb.from('jugadores').select('id,nombre').in('id', companeroIds);
+  const compMap = {};
+  (companeros||[]).forEach(j => { compMap[j.id] = j.nombre; });
+
+  el.innerHTML = inscripciones.map(i => {
+    const t = i.torneos;
+    const companeroId = i.jugador1_id === userId ? i.jugador2_id : i.jugador1_id;
+    const companeroNombre = compMap[companeroId] || '—';
+    const fecha = t?.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'long' }) : '—';
+    const estadoColor = { abierto:'var(--verde)', en_curso:'#64b4ff', finalizado:'var(--texto-suave)' }[t?.estado] || 'var(--texto-suave)';
+
+    return `<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--blanco)">${t?.nombre||'—'}</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">Con ${companeroNombre} · ${fecha}</div>
+        </div>
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(200,245,90,0.08);color:${estadoColor}">${t?.estado||'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── INSCRIPCIÓN ──
+async function abrirModalInscripcion(torneoId) {
+  torneoActualId = torneoId;
+  compañeroSeleccionado = null;
+  document.getElementById('buscar-compañero').value = '';
+  document.getElementById('resultados-compañero').innerHTML = '';
+  document.getElementById('compañero-seleccionado').style.display = 'none';
+  document.getElementById('validacion-pareja').style.display = 'none';
+  const alertEl = document.getElementById('alert-inscripcion');
+  alertEl.classList.remove('show');
+
+  const { data: torneo } = await _sb.from('torneos').select('*').eq('id', torneoId).single();
+  torneoInscripcionData = torneo;
+
+  const tipoLabel = { masculino:'Masculino', femenino:'Femenino', mixto:'Mixto', suma_x:'Suma X' };
+  const infoEl = document.getElementById('inscripcion-torneo-info');
+  infoEl.innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--blanco);margin-bottom:6px">${torneo.nombre}</div>
+    <div style="font-size:12px;color:var(--texto-suave)">${tipoLabel[torneo.tipo]||torneo.tipo} · ${torneo.categoria}</div>
+    ${torneo.tipo === 'suma_x' ? `<div style="font-size:11px;color:#ffb432;margin-top:4px">⚡ La suma de tus ratings debe ser ≤ ${torneo.suma_max}</div>` : ''}
+    <div style="font-size:12px;color:var(--texto-suave);margin-top:2px">Lugares disponibles: ${torneo.cupos_max - torneo.cupos_ocupados}</div>`;
+
+  document.getElementById('modal-inscripcion').style.display = 'flex';
+}
+
+function cerrarModalInscripcion() {
+  document.getElementById('modal-inscripcion').style.display = 'none';
+  torneoActualId = null;
+  compañeroSeleccionado = null;
+  torneoInscripcionData = null;
+}
+
+async function buscarCompañero() {
+  const q = document.getElementById('buscar-compañero').value.trim();
+  const contenedor = document.getElementById('resultados-compañero');
+  if (!q || q.length < 2) { contenedor.innerHTML = ''; return; }
+
+  const { data: { user } } = await _sb.auth.getUser();
+
+  const { data: jugadores } = await _sb.from('jugadores')
+    .select('id, nombre, rating_mto, genero, categoria_habilitada, ciudad')
+    .ilike('nombre', `%${q}%`)
+    .neq('id', user.id)
+    .limit(5);
+
+  if (!jugadores || jugadores.length === 0) {
+    contenedor.innerHTML = '<div style="font-size:12px;color:var(--texto-suave);padding:8px">Sin resultados</div>';
+    return;
+  }
+
+  contenedor.innerHTML = jugadores.map(j => `
+    <div onclick="seleccionarCompañero('${j.id}','${(j.nombre||'').replace(/'/g,"\'")}',${j.rating_mto||0},'${j.genero||''}',${j.rating_mto||0})"
+      style="padding:8px 12px;cursor:pointer;border-radius:8px;margin-bottom:4px;background:var(--gris-medio);display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='rgba(200,245,90,0.08)'"
+      onmouseout="this.style.background='var(--gris-medio)'">
+      <div>
+        <div style="font-size:13px;color:var(--blanco)">${j.nombre}</div>
+        <div style="font-size:11px;color:var(--texto-suave)">${j.categoria_habilitada||''} · ${j.genero||''} · ${j.ciudad||''}</div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--verde)">${(j.rating_mto||0).toFixed(1)}</div>
+    </div>`).join('');
+}
+
+async function seleccionarCompañero(id, nombre, rating, genero) {
+  compañeroSeleccionado = { id, nombre, rating: parseFloat(rating), genero };
+
+  document.getElementById('buscar-compañero').value = '';
+  document.getElementById('resultados-compañero').innerHTML = '';
+  document.getElementById('compañero-nombre').textContent = `${nombre} · MTO ${parseFloat(rating).toFixed(1)}`;
+  document.getElementById('compañero-seleccionado').style.display = 'flex';
+
+  // Validar pareja según tipo de torneo
+  await validarPareja();
+}
+
+function limpiarCompañero() {
+  compañeroSeleccionado = null;
+  document.getElementById('compañero-seleccionado').style.display = 'none';
+  document.getElementById('validacion-pareja').style.display = 'none';
+}
+
+async function validarPareja() {
+  const valEl = document.getElementById('validacion-pareja');
+  if (!compañeroSeleccionado || !torneoInscripcionData) return;
+
+  const { data: { user } } = await _sb.auth.getUser();
+  const { data: jugador } = await _sb.from('jugadores').select('*').eq('id', user.id).single();
+  if (!jugador) return;
+
+  const torneo = torneoInscripcionData;
+  let valido = true;
+  let mensaje = '';
+
+  // ── VALIDACIÓN ANTI-TRAMPA: categoría habilitada ──
+  const jerarquiaCat = {
+    'sin_categoria': 0,
+    '8va': 1,
+    '7ma': 2,
+    '6ta': 3,
+    '5ta': 4,
+    '4ta': 5,
+    '3ra': 6,
+    '2da': 7,
+    '1ra': 8
+  };
+  const catHabilitada = jugador.categoria_habilitada || 'sin_categoria';
+  const catTorneo = torneo.categoria || 'sin_categoria';
+  const nivelJugador = jerarquiaCat[catHabilitada] ?? 0;
+  const nivelTorneo = jerarquiaCat[catTorneo] ?? 0;
+
+  if (nivelTorneo < nivelJugador) {
+    valido = false;
+    mensaje = `❌ No podés inscribirte en este torneo. Tu categoría habilitada es ${catHabilitada} y este torneo es de ${catTorneo}. Solo podés anotarte en torneos de tu categoría o superiores.`;
+  }
+
+  if (valido && torneo.tipo === 'masculino') {
+    if (jugador.genero !== 'masculino' || compañeroSeleccionado.genero !== 'masculino') {
+      valido = false;
+      mensaje = '❌ Este torneo es masculino. Ambos jugadores deben ser hombres.';
+    }
+  } else if (valido && torneo.tipo === 'femenino') {
+    if (jugador.genero !== 'femenino' || compañeroSeleccionado.genero !== 'femenino') {
+      valido = false;
+      mensaje = '❌ Este torneo es femenino. Ambas jugadoras deben ser mujeres.';
+    }
+  } else if (valido && torneo.tipo === 'mixto') {
+    if (jugador.genero === compañeroSeleccionado.genero) {
+      valido = false;
+      mensaje = '❌ Este torneo es mixto. La pareja debe ser un hombre y una mujer.';
+    }
+  } else if (valido && torneo.tipo === 'suma_x') {
+    const suma = (jugador.rating_mto || 0) + (compañeroSeleccionado.rating || 0);
+    if (suma > torneo.suma_max) {
+      valido = false;
+      mensaje = `❌ La suma de ratings (${suma.toFixed(1)}) supera el máximo permitido (${torneo.suma_max}). Elegí otro compañero.`;
+    } else {
+      mensaje = `✓ Suma de ratings: ${suma.toFixed(1)} / ${torneo.suma_max} — ¡Pareja válida!`;
+    }
+  }
+
+  if (valido && !mensaje) mensaje = '✓ Pareja válida para este torneo.';
+
+  valEl.style.display = 'block';
+  valEl.style.background = valido ? 'rgba(200,245,90,0.08)' : 'rgba(255,77,77,0.08)';
+  valEl.style.border = `1px solid ${valido ? 'rgba(200,245,90,0.25)' : 'rgba(255,77,77,0.25)'}`;
+  valEl.style.color = valido ? 'var(--verde)' : '#ff8080';
+  valEl.textContent = mensaje;
+}
+
+async function doInscribirse() {
+  const alertEl = document.getElementById('alert-inscripcion');
+  alertEl.classList.remove('show');
+
+  if (!compañeroSeleccionado) {
+    alertEl.textContent = 'Seleccioná tu compañero/a de pareja.';
+    alertEl.classList.add('show');
+    return;
+  }
+
+  const valEl = document.getElementById('validacion-pareja');
+  if (valEl.textContent.startsWith('❌')) {
+    alertEl.textContent = 'La pareja no cumple los requisitos del torneo.';
+    alertEl.classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('btn-inscribirse');
+  btn.disabled = true; btn.textContent = 'Inscribiendo...';
+
+  const { data: { user } } = await _sb.auth.getUser();
+
+  // Verificar que ninguno ya esté inscripto
+  const { data: yaInscripto } = await _sb.from('inscripciones')
+    .select('id')
+    .eq('torneo_id', torneoActualId)
+    .or(`jugador1_id.eq.${user.id},jugador2_id.eq.${user.id},jugador1_id.eq.${compañeroSeleccionado.id},jugador2_id.eq.${compañeroSeleccionado.id}`);
+
+  if (yaInscripto && yaInscripto.length > 0) {
+    alertEl.textContent = 'Vos o tu compañero ya están inscriptos en este torneo.';
+    alertEl.classList.add('show');
+    btn.disabled = false; btn.textContent = 'Confirmar inscripción';
+    return;
+  }
+
+  const { error } = await _sb.from('inscripciones').insert({
+    torneo_id: torneoActualId,
+    jugador1_id: user.id,
+    jugador2_id: compañeroSeleccionado.id,
+    estado: 'confirmada'
+  });
+
+  if (error) {
+    alertEl.textContent = 'Error al inscribirse: ' + error.message;
+    alertEl.classList.add('show');
+    btn.disabled = false; btn.textContent = 'Confirmar inscripción';
+    return;
+  }
+
+  // Actualizar cupos ocupados
+  await _sb.from('torneos').update({
+    cupos_ocupados: (torneoInscripcionData.cupos_ocupados || 0) + 1
+  }).eq('id', torneoActualId);
+
+  btn.disabled = false; btn.textContent = 'Confirmar inscripción';
+  cerrarModalInscripcion();
+  alert('¡Inscripción confirmada! Ya aparecés en el torneo.');
+  await cargarTorneosJugador();
+}
+
+// ── TORNEOS ADMIN ──
+async function cargarTorneosAdmin() {
+  const el = document.getElementById('admin-torneos-lista');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--texto-suave);font-size:13px">Cargando...</div>';
+
+  const { data: torneos } = await _sb.from('torneos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (!torneos || torneos.length === 0) {
+    if (el) el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--texto-suave);font-size:13px">Sin torneos registrados todavía.</div>';
+    return;
+  }
+
+  const estadoColor = {
+    abierto: 'rgba(200,245,90,0.1);color:var(--verde)',
+    en_curso: 'rgba(100,180,255,0.1);color:#64b4ff',
+    finalizado: 'rgba(255,255,255,0.05);color:var(--texto-suave)',
+    cerrado: 'rgba(255,180,50,0.1);color:#ffb432'
+  };
+  const tipoLabel = { masculino:'Masculino', femenino:'Femenino', mixto:'Mixto', suma_x:'Suma X' };
+  const formatoLabel = { zonas:'Zonas', eliminacion:'Eliminación directa' };
+
+  if (el) el.innerHTML = torneos.map(t => {
+    const fecha = t.fecha_inicio ? new Date(t.fecha_inicio + 'T00:00:00').toLocaleDateString('es-AR', { day:'numeric', month:'long', year:'numeric' }) : '—';
+    const color = estadoColor[t.estado] || estadoColor.finalizado;
+    return `<div style="background:var(--gris);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--borde)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--blanco);margin-bottom:4px">${t.nombre}</div>
+          <div style="font-size:11px;color:var(--texto-suave)">${tipoLabel[t.tipo]||t.tipo} · ${t.categoria} · ${formatoLabel[t.formato]||t.formato}</div>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:2px">📅 ${fecha} · 📍 ${t.ubicacion||'—'}</div>
+          <div style="font-size:11px;color:var(--verde);margin-top:2px">Parejas: ${t.cupos_ocupados}/${t.cupos_max}</div>
+        </div>
+        <span style="font-size:10px;padding:3px 10px;border-radius:10px;white-space:nowrap;background:${color}">${t.estado}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
